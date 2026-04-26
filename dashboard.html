@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - ScorePilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:#0a0a0a;color:white;min-height:100vh;position:relative;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;z-index:0;}
+#themeGlow{position:fixed;top:0;left:0;width:100%;height:180px;background:linear-gradient(180deg,var(--glow-color,#6366f1) 0%,transparent 100%);opacity:0;pointer-events:none;z-index:1;transition:opacity 0.8s ease;}
+#themeGlow.active{opacity:0.12;}
+.container{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:40px 32px;}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:56px;}
+.logo-area{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.logo-text{font-size:26px;font-weight:900;background:linear-gradient(135deg,#4A90E2,#7B68EE);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.icon-btn{width:44px;height:44px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:all 0.25s;text-decoration:none;color:white;position:relative;}
+.icon-btn:hover{background:rgba(255,255,255,0.1);}
+.icon-btn.on{background:rgba(16,185,129,0.2)!important;border-color:rgba(16,185,129,0.4)!important;}
+.notif-badge{position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:50%;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #0a0a0a;}
+.notif-panel{position:fixed;top:80px;right:32px;width:360px;max-height:500px;background:rgba(10,10,10,0.98);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:20px;display:none;z-index:200;box-shadow:0 20px 60px rgba(0,0,0,0.5);overflow-y:auto;}
+.notif-panel.show{display:block;animation:slideDown 0.3s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+.notif-item{padding:14px;background:rgba(255,255,255,0.05);border-radius:12px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;}
+.notif-item:hover{background:rgba(255,255,255,0.08);}
+.notif-item.unread{border-left:3px solid #6366f1;}
+.notif-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.notif-desc{font-size:12px;color:rgba(255,255,255,0.5);}
+.notif-time{font-size:10px;color:rgba(255,255,255,0.3);margin-top:6px;}
+.user-pill{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:6px 16px 6px 6px;border-radius:100px;cursor:pointer;transition:all 0.25s;}
+.user-pill:hover{background:rgba(255,255,255,0.08);}
+.user-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0066FF,#8B5CF6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;overflow:hidden;}
+.user-info{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.user-name{font-size:13px;font-weight:700;line-height:1;white-space:nowrap;}
+.user-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:5px;line-height:1.4;display:inline-block;letter-spacing:0.5px;width:fit-content;}
+.badge-admin{background:linear-gradient(135deg,#ef4444,#dc2626);color:white;}
+.badge-collaborateur{background:linear-gradient(135deg,#8B5CF6,#6366f1);color:white;}
+.badge-pro{background:linear-gradient(135deg,#f59e0b,#d97706);color:white;}
+.badge-free{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.08);}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px;align-items:start;}
+.grid.empty{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 240px);}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:60px 40px;}
+.empty-btn{padding:16px 36px;background:linear-gradient(135deg,#0066FF,#8B5CF6);border:none;border-radius:14px;color:white;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.empty-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,0.4);}
+
+/* BLOCS */
+.bloc{position:relative;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:24px;overflow:visible;cursor:pointer;transition:transform 0.35s cubic-bezier(.22,.68,0,1.2), border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;min-height:180px;}
+.bloc:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.14);background:rgba(255,255,255,0.05);box-shadow:0 8px 32px rgba(0,0,0,0.3);}
+.bloc.editing{cursor:move;}
+.bloc.editing:hover{transform:none;box-shadow:none;}
+.bloc-inner{padding:28px;overflow:hidden;border-radius:24px;}
+.bloc-icon{font-size:44px;margin-bottom:16px;line-height:1;}
+.bloc-title{font-size:20px;font-weight:700;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bloc-desc{font-size:13px;color:rgba(255,255,255,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* TAILLES */
+.s3{grid-column:span 3;min-width:0;}
+.s4{grid-column:span 4;min-width:0;}
+.s6{grid-column:span 6;min-width:0;}
+.s8{grid-column:span 8;min-width:0;}
+.s12{grid-column:span 12;min-width:0;}
+
+/* BLOC METHODE FREE */
+.methode-free{
+  background:rgba(99,102,241,0.04);
+  border:1px solid rgba(99,102,241,0.2);
+  box-shadow:0 0 0px rgba(99,102,241,0);
+  border-radius:28px;
+  padding:56px 48px;
+  text-align:center;
+  cursor:pointer;
+  transition:box-shadow 0.6s ease, border-color 0.6s ease, background 0.6s ease, transform 0.4s cubic-bezier(.22,.68,0,1.1);
+}
+.methode-free:hover{
+  box-shadow:0 0 50px rgba(99,102,241,0.22), 0 8px 32px rgba(0,0,0,0.25);
+  border-color:rgba(99,102,241,0.45);
+  background:rgba(99,102,241,0.09);
+  transform:translateY(-3px);
+}
+
+/* BLOC RANG PREVIEW */
+.rang-preview{margin-top:16px;background:rgba(0,0,0,0.3);border-radius:14px;padding:18px 12px;text-align:center;overflow:hidden;}
+.rang-icon{font-size:44px;margin-bottom:6px;display:block;line-height:1;}
+
+/* BLOC LOCKED */
+.bloc-locked{position:relative;}
+.bloc-locked::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:5;border-radius:24px;}
+.bloc-locked::after{content:'🔒 Connecte ton EcoleDirecte';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#6366f1,#818cf8);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;white-space:nowrap;z-index:6;box-shadow:0 4px 16px rgba(99,102,241,0.4);}
+
+/* CONTROLS EDITION */
+.bloc-del{position:absolute;top:10px;left:10px;width:28px;height:28px;background:rgba(239,68,68,0.9);border:none;border-radius:50%;color:white;font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:20;line-height:1;}
+.bloc-cfg{position:absolute;top:10px;right:10px;width:28px;height:28px;background:rgba(99,102,241,0.9);border:none;border-radius:50%;color:white;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:20;}
+.editing .bloc-del,.editing .bloc-cfg{display:flex;}
+.size-menu{position:absolute;top:44px;right:10px;background:rgba(10,10,10,0.98);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:10px;z-index:30;display:none;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+.size-menu.show{display:block;}
+.size-menu-title{font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:1px;padding:2px 6px 8px;text-transform:uppercase;}
+.size-opt{padding:9px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.size-opt:hover{background:rgba(255,255,255,0.08);}
+.size-opt-bars{display:flex;gap:2px;align-items:center;}
+.size-opt-bar{height:12px;background:rgba(99,102,241,0.6);border-radius:2px;width:6px;}
+.size-opt.active-size{background:rgba(99,102,241,0.15);color:#818cf8;}
+
+/* MENU ADD */
+.add-menu{position:fixed;bottom:32px;right:32px;background:rgba(12,12,18,0.98);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:16px;display:none;flex-direction:column;gap:6px;z-index:100;min-width:250px;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.add-menu.show{display:flex;animation:slideUp 0.25s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.add-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;cursor:pointer;transition:all 0.15s;}
+.add-item:hover{background:rgba(255,255,255,0.07);}
+.add-item-icon{font-size:22px;width:36px;text-align:center;}
+.add-item-name{font-size:14px;font-weight:600;}
+.add-header{font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);padding:4px 8px;margin-bottom:4px;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div id="themeGlow"></div>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-area" style="cursor:default;">
+      <img src="logo-court-noir.png" style="width:32px;height:32px;object-fit:contain;filter:brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(200deg) brightness(98%) contrast(92%);" onerror="this.style.display='none';">
+      <span class="logo-text">ScorePilot</span>
+    </div>
+    <div class="header-right">
+      <div class="icon-btn" id="adminBtn" onclick="window.location.href='admin-panel.html'" style="display:none;">👨‍💼</div>
+      <div class="icon-btn" id="adminNotifBtn" onclick="window.location.href='notifs-admin.html'" style="display:none;" title="Gérer notifs">📢</div>
+      <div class="icon-btn" id="notifBtn" onclick="toggleNotifs()">
+        🔔
+        <span class="notif-badge" id="notifBadge" style="display:none;">3</span>
+      </div>
+      <div class="icon-btn" id="editBtn" onclick="toggleEdit()" style="display:none;" title="Modifier">✏️</div>
+      <div class="icon-btn" onclick="window.location.href='settings.html'" title="Paramètres">⚙️</div>
+      <div class="icon-btn" onclick="logout()" title="Déconnexion">🚪</div>
+      <div class="user-pill" onclick="window.location.href='settings.html'" id="userPill">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">...</div>
+          <span class="user-badge badge-free" id="userBadge">FREE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Notifs -->
+  <div class="notif-panel" id="notifPanel">
+    <div style="font-size:16px;font-weight:800;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+      <span>🔔 Notifications</span>
+      <span style="font-size:12px;color:rgba(255,255,255,0.4);cursor:pointer;" onclick="markAllRead()">Tout lire</span>
+    </div>
+    <div id="notifsList"></div>
+  </div>
+
+  <!-- GRID -->
+  <div class="grid empty" id="grid">
+    <div class="empty-state" id="emptyState">
+      <div style="font-size:90px;margin-bottom:28px;opacity:0.7;">📦</div>
+      <div style="font-size:30px;font-weight:800;margin-bottom:10px;">Dashboard vide</div>
+      <div style="font-size:15px;color:rgba(255,255,255,0.45);max-width:360px;margin:0 auto 36px;line-height:1.6;">Ajoute des blocs pour personnaliser ton espace</div>
+      <button class="empty-btn" onclick="toggleEdit()">✨ Ajouter des blocs</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MENU ADD -->
+<div class="add-menu" id="addMenu">
+  <div class="add-header">AJOUTER UN BLOC</div>
+</div>
+
+<script>
+// ========== SP CORE INLINE (fallback si sp-core.js pas chargé) ==========
+const SP_getPoints=id=>{
+  const v=localStorage.getItem(`sp_points_${id}`)||localStorage.getItem(`scorepilot_points_${id}`);
+  return parseInt(v||'0');
+};
+const SP_getPhoto=id=>localStorage.getItem(`sp_photo_${id}`)||localStorage.getItem(`scorepilot_photo_${id}`)||null;
+const SP_hasED=id=>!!(localStorage.getItem(`sp_ed_${id}`)||localStorage.getItem(`scorepilot_ed_${id}`));
+const SP_getUserId=u=>u.id||u.name.replace(/\s+/g,'_').toLowerCase();
+const SP_getStatus=(id,base)=>{
+  if(id==='ayman'||id==='admin_ayman')return'ADMIN';
+  const r=localStorage.getItem(`sp_roles_${id}`)||localStorage.getItem(`scorepilot_roles_${id}`);
+  if(r){
+    const roles=JSON.parse(r).filter(x=>x.expiresAt===-1||x.expiresAt>Date.now());
+    if(roles.length){
+      const p={ADMIN:3,COLLABORATEUR:2,PRO:1,FREE:0};
+      roles.sort((a,b)=>(p[b.role]||0)-(p[a.role]||0));
+      return roles[0].role;
+    }
+  }
+  return base||'FREE';
+};
+const RANKS=[
+  {name:'BRONZE',icon:'🥉',glow:'#CD7F32',pts:[0,100]},
+  {name:'ARGENT',icon:'🥈',glow:'#C0C0C0',pts:[100,200]},
+  {name:'OR',icon:'🥇',glow:'#FFD700',pts:[200,300]},
+  {name:'PLATINE',icon:'💎',glow:'#E5E4E2',pts:[300,400]},
+  {name:'DIAMANT',icon:'💠',glow:'#B9F2FF',pts:[400,500]},
+  {name:'CHAMPION',icon:'👑',glow:'#8B00FF',pts:[500,600]},
+  {name:'LÉGENDE',icon:'⭐',glow:'#FFD700',pts:[600,9999]}
+];
+
+const BLOCS={
+  methode:   {icon:'🎓',title:'Méthode',    desc:'Guide complet',      url:'methode.html',           def:'s6', free:true,  needsED:false},
+  rang:      {icon:'🏆',title:'Rang',       desc:'Classement RR',      url:'rang.html',              def:'s4', free:false, needsED:false},
+  revision:  {icon:'📚',title:'Révision IA',desc:'Isidor Gemini',      url:'revision-ultimate.html', def:'s8', free:false, needsED:true},
+  previsions:{icon:'📊',title:'Prévisions', desc:'Plans personnalisés', url:'previsions.html',        def:'s4', free:false, needsED:true},
+  tracker:   {icon:'📈',title:'Tracker',    desc:'Habitudes',           url:'tracker.html',           def:'s4', free:false, needsED:true},
+  priorites: {icon:'⚠️',title:'Priorités', desc:'Tâches',              url:'priorites.html',         def:'s4', free:false, needsED:true},
+};
+
+// ========== STATE ==========
+let CU, userId, pts=0, hasED=false, editMode=false, sortable=null;
+
+// ========== INIT ==========
+window.addEventListener('load', () => {
+  CU = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+  if (!CU.name) { window.location.href='login-revolut.html'; return; }
+  userId = CU.name.replace(/\s+/g,'_').toLowerCase();
+  CU.status = SP_getStatus(userId, CU.status);
+  pts = SP_getPoints(userId);
+  hasED = SP_hasED(userId);
+  
+  // Charger plan prévisions si actif
+  const planData = localStorage.getItem(`sp_plan_${userId}`);
+  if(planData){
+    const plan = JSON.parse(planData);
+    const glow = document.getElementById('themeGlow');
+    glow.style.setProperty('--glow-color', plan.color);
+    glow.classList.add('active');
+    
+    // Adapter layout si PRO+ et dashboard vide
+    const saved = loadDashKey();
+    if(CU.status !== 'FREE' && saved.length === 0 && plan.layout){
+      plan.layout.forEach(type => {
+        const cfg = BLOCS[type];
+        if(cfg) addBloc(type, cfg.def);
+      });
+      saveLayout();
+    }
+  }
+  
+  renderHeader();
+  loadLayout();
+  loadNotifs();
+});
+
+// ========== HEADER ==========
+function renderHeader() {
+  const unameEl = document.getElementById('userName');
+  unameEl.textContent = CU.name;
+  // Ajouter badge certif pour admin/collabo
+  if (['ADMIN','COLLABORATEUR'].includes(CU.status)) {
+    const certif = document.createElement('span');
+    certif.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-left:3px;flex-shrink:0;" title="Certifié"><circle cx="12" cy="12" r="12" fill="#2D44BC"/><path d="M10.4168 13.5833L7.2502 10.4167L5.66687 12L10.4168 16.7499L18.3335 8.83333L16.7502 7.25L10.4168 13.5833Z" fill="white"/></svg>';
+    unameEl.style.display = 'flex';
+    unameEl.style.alignItems = 'center';
+    unameEl.appendChild(certif.firstChild);
+  }
+  const badge = document.getElementById('userBadge');
+  badge.textContent = CU.status;
+  badge.className = `user-badge badge-${CU.status.toLowerCase()}`;
+
+  const av = document.getElementById('userAvatar');
+  const photo = SP_getPhoto(userId);
+  if (photo) {
+    // Remplacer tout le contenu de l'avatar par l'image
+    av.style.background = 'none';
+    av.style.padding = '0';
+    av.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = photo;
+    img.style.cssText = 'width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;';
+    img.onerror = () => { av.innerHTML = CU.name.charAt(0).toUpperCase(); av.style.background='linear-gradient(135deg,#0066FF,#8B5CF6)'; };
+    av.appendChild(img);
+  } else {
+    av.innerHTML = CU.name.charAt(0).toUpperCase();
+    av.style.background = 'linear-gradient(135deg,#0066FF,#8B5CF6)';
+  }
+
+  if (['ADMIN'].includes(CU.status)){
+    document.getElementById('adminBtn').style.display='flex';
+    document.getElementById('adminNotifBtn').style.display='flex';
+  }
+  if (!['FREE'].includes(CU.status)) document.getElementById('editBtn').style.display='flex';
+}
+
+// ========== LAYOUT ==========
+function loadLayout() {
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('emptyState');
+
+  if (CU.status === 'FREE') {
+    // FREE: bloc méthode centré stylisé
+    grid.classList.remove('empty');
+    empty.remove();
+    addMethodeBloc();
+    return;
+  }
+
+  const saved = loadDashKey();
+  if (saved.length > 0) {
+    grid.classList.remove('empty');
+    empty.remove();
+    saved.forEach(b => addBloc(b.type, b.size, b.height));
+  }
+  // sinon empty state reste
+}
+
+function addMethodeBloc() {
+  const grid = document.getElementById('grid');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'grid-column:span 12;display:flex;justify-content:center;align-items:center;min-height:60vh;';
+
+  wrap.innerHTML = `
+    <div class="methode-free" onclick="navigateBloc('methode.html')" style="max-width:600px;width:100%;">
+      <div style="font-size:80px;margin-bottom:28px;filter:drop-shadow(0 0 28px rgba(99,102,241,0.55));line-height:1;">🎓</div>
+      <h1 style="font-size:36px;font-weight:900;margin-bottom:14px;background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2;">Méthode ScorePilot</h1>
+      <p style="font-size:16px;color:rgba(255,255,255,0.55);margin-bottom:12px;line-height:1.7;">La méthode complète pour <strong style="color:rgba(255,255,255,0.8);">booster tes notes</strong> et t'organiser efficacement.</p>
+      <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin:24px 0;padding:16px;background:rgba(0,0,0,0.2);border-radius:14px;">
+        <div style="text-align:center;"><div style="font-size:28px;font-weight:900;color:#818cf8;">+2pts</div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">MOYENNE</div></div>
+        <div style="width:1px;height:36px;background:rgba(255,255,255,0.1);"></div>
+        <div style="text-align:center;"><div style="font-size:28px;font-weight:900;color:#818cf8;">4 sem</div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">RÉSULTATS</div></div>
+        <div style="width:1px;height:36px;background:rgba(255,255,255,0.1);"></div>
+        <div style="text-align:center;"><div style="font-size:28px;font-weight:900;color:#818cf8;">200+</div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">ÉLÈVES</div></div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="event.stopPropagation();navigateBloc('methode.html')"
+          style="padding:15px 36px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:100px;color:white;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(99,102,241,0.4);transition:all 0.3s;"
+          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(99,102,241,0.55)'"
+          onmouseout="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(99,102,241,0.4)'">
+          ✨ Découvrir
+        </button>
+        <button onclick="event.stopPropagation();showProModal()"
+          style="padding:15px 32px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:100px;color:white;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.3s;"
+          onmouseover="this.style.background='rgba(255,255,255,0.12)'"
+          onmouseout="this.style.background='rgba(255,255,255,0.07)'">
+          👑 Passer PRO
+        </button>
+      </div>
+    </div>`;
+  grid.appendChild(wrap);
+}
+
+// ========== BLOCS ==========
+function getRank(p) {
+  for (let i=RANKS.length-1;i>=0;i--) if(p>=RANKS[i].pts[0]) return RANKS[i];
+  return RANKS[0];
+}
+
+function loadDashKey() {
+  return JSON.parse(
+    localStorage.getItem(`sp_dash_${userId}`) ||
+    localStorage.getItem(`scorepilot_dashboard_${userId}`) ||
+    localStorage.getItem(`scorepilot_dash_${userId}`) ||
+    '[]'
+  );
+}
+
+function addBloc(type, size, height) {
+  const cfg = BLOCS[type];
+  if (!cfg) return;
+
+  size = size || cfg.def;
+  height = height || '180px';
+  const isLocked = cfg.needsED && !hasED;
+  const grid = document.getElementById('grid');
+
+  const el = document.createElement('div');
+  el.dataset.type = type;
+  el.dataset.size = size;
+  el.dataset.height = height;
+  el.style.minHeight = height;
+  el.className = `bloc ${size}${isLocked?' bloc-locked':''}`;
+
+  // click
+  if (isLocked) {
+    el.onclick = () => {
+      const ov=document.createElement('div');
+      ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;';
+      ov.innerHTML=`<div style="background:#111;border:1px solid rgba(99,102,241,0.3);border-radius:24px;padding:32px;max-width:380px;width:100%;text-align:center;"><div style="font-size:44px;margin-bottom:12px;">🔒</div><div style="font-size:20px;font-weight:800;margin-bottom:8px;">Bloc verrouillé</div><div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:24px;">Connecte ton EcoleDirecte dans les paramètres.</div><div style="display:flex;gap:10px;"><button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;cursor:pointer;">Fermer</button><button onclick="window.location.href='settings.html'" style="flex:1;padding:13px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;">⚙️ Paramètres</button></div></div>`;
+      ov.onclick=e=>{if(e.target===ov)ov.remove();};
+      document.body.appendChild(ov);
+    };
+  } else {
+    el.onclick = () => { if (!editMode) navigateBloc(cfg.url); };
+  }
+
+  // Previews selon type de bloc
+  let extra = '';
+  if (type === 'rang') {
+    const freshPts = SP_getPoints(userId);
+    pts = freshPts;
+    const r = getRank(freshPts);
+    const nextPts = freshPts < 2400 ? (r.pts[1] < 9999 ? r.pts[1] : 2400) : 2400;
+    const prevPts = r.pts[0];
+    const progress = nextPts > prevPts ? Math.min(100, Math.round(((freshPts - prevPts) / (nextPts - prevPts)) * 100)) : 100;
+    extra = `<div class="rang-preview" style="background:linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,0,0,0.2));border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:16px;margin-top:16px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.1));border:1px solid rgba(99,102,241,0.25);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${r.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:800;letter-spacing:0.5px;color:white;margin-bottom:2px;">${r.name}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);">CLASSEMENT COMPÉTITIF</div>
+        </div>
+        <div style="text-align:right;"><div style="font-size:16px;font-weight:900;color:#818cf8;">${freshPts}</div><div style="font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1px;">RR</div></div>
+      </div>
+      <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;position:relative;">
+        <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:100px;transition:width 1s cubic-bezier(0.25,0.46,0.45,0.94);"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:1px;">${freshPts < 2400 ? `<span>${prevPts} RR</span><span>${progress}%</span><span>${nextPts} RR</span>` : '<span style="color:#ffe066;font-weight:700;">✦ GRAND CHAMPION</span>'}</div>
+    </div>`;
+  } else if (type === 'revision') {
+    extra = `<div style="margin-top:16px;padding:12px;background:rgba(139,92,246,0.1);border-radius:10px;border:1px solid rgba(139,92,246,0.2);"><div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;">Dernière session</div><div style="font-size:14px;font-weight:600;">Mathématiques • 25min</div></div>`;
+  } else if (type === 'previsions') {
+    extra = `<div style="margin-top:16px;display:flex;gap:8px;"><div style="flex:1;padding:10px;background:rgba(99,102,241,0.1);border-radius:8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:#6366f1;">+1.5</div><div style="font-size:10px;color:rgba(255,255,255,0.4);">POINTS</div></div><div style="flex:1;padding:10px;background:rgba(16,185,129,0.1);border-radius:8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:#10b981;">4</div><div style="font-size:10px;color:rgba(255,255,255,0.4);">SEMAINES</div></div></div>`;
+  } else if (type === 'tracker') {
+    extra = `<div style="margin-top:16px;padding:12px;background:rgba(16,185,129,0.1);border-radius:10px;"><div style="font-size:24px;font-weight:900;color:#10b981;margin-bottom:4px;">7 🔥</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">JOURS CONSÉCUTIFS</div></div>`;
+  } else if (type === 'priorites') {
+    const tasks = JSON.parse(localStorage.getItem(`sp_tasks_${userId}`) || '[]');
+    const urgent = tasks.filter(t=>!t.done && t.priority==='urgent').length;
+    const high = tasks.filter(t=>!t.done && t.priority==='high').length;
+    const total = tasks.filter(t=>!t.done).length;
+    const nextTask = tasks.find(t=>!t.done);
+    extra = `<div style="margin-top:14px;">
+      <div style="display:flex;gap:7px;margin-bottom:10px;">
+        <div style="flex:1;padding:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);border-radius:9px;text-align:center;"><div style="font-size:16px;font-weight:900;color:#ef4444;">${urgent}</div><div style="font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;">URGENT</div></div>
+        <div style="flex:1;padding:8px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);border-radius:9px;text-align:center;"><div style="font-size:16px;font-weight:900;color:#f59e0b;">${high}</div><div style="font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;">ÉLEVÉ</div></div>
+        <div style="flex:1;padding:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.15);border-radius:9px;text-align:center;"><div style="font-size:16px;font-weight:900;color:#818cf8;">${total}</div><div style="font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;">TOTAL</div></div>
+      </div>
+      ${nextTask ? `<div style="padding:8px 10px;background:rgba(255,255,255,0.04);border-left:2px solid ${nextTask.priority==='urgent'?'#ef4444':nextTask.priority==='high'?'#f59e0b':'#6366f1'};border-radius:0 7px 7px 0;font-size:11px;color:rgba(255,255,255,0.7);">→ ${nextTask.name}</div>` : '<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;padding:4px;">Aucune tâche urgente 🎉</div>'}
+    </div>`;
+  } else if (type === 'methode') {
+    extra = `<div style="margin-top:16px;padding:12px;background:rgba(99,102,241,0.05);border-radius:10px;text-align:center;"><div style="font-size:13px;font-weight:600;color:#818cf8;">+2pts moyenne</div></div>`;
+  }
+
+  el.innerHTML = `
+    <button class="bloc-del" onclick="event.stopPropagation();deleteBloc(this)">×</button>
+    <button class="bloc-cfg" onclick="event.stopPropagation();toggleSizeMenu(this)">⊞</button>
+    <div class="size-menu">
+      <div class="size-menu-title">Largeur</div>
+      <div class="size-opt" onclick="event.stopPropagation();resizeBloc(this,'s3')">
+        <span>Compact</span>
+        <div class="size-opt-bars"><div class="size-opt-bar"></div><div class="size-opt-bar"></div><div class="size-opt-bar" style="opacity:0.2"></div><div class="size-opt-bar" style="opacity:0.2"></div></div>
+      </div>
+      <div class="size-opt" onclick="event.stopPropagation();resizeBloc(this,'s4')">
+        <span>Petit</span>
+        <div class="size-opt-bars"><div class="size-opt-bar"></div><div class="size-opt-bar"></div><div class="size-opt-bar"></div><div class="size-opt-bar" style="opacity:0.2"></div></div>
+      </div>
+      <div class="size-opt" onclick="event.stopPropagation();resizeBloc(this,'s6')">
+        <span>Moyen</span>
+        <div class="size-opt-bars"><div class="size-opt-bar"></div><div class="size-opt-bar"></div><div class="size-opt-bar"></div><div class="size-opt-bar" style="opacity:0.4"></div></div>
+      </div>
+      <div class="size-opt" onclick="event.stopPropagation();resizeBloc(this,'s8')">
+        <span>Grand</span>
+        <div class="size-opt-bars"><div class="size-opt-bar"></div><div class="size-opt-bar"></div><div class="size-opt-bar"></div><div class="size-opt-bar"></div></div>
+      </div>
+      <div class="size-opt" onclick="event.stopPropagation();resizeBloc(this,'s12')">
+        <span>Pleine largeur</span>
+        <div class="size-opt-bars"><div class="size-opt-bar" style="width:28px;"></div></div>
+      </div>
+      <div class="size-menu-title" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);">Hauteur</div>
+      <div class="size-opt" onclick="event.stopPropagation();toggleHeight(this)">
+        <span>Ajuster hauteur</span>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);">↕️</div>
+      </div>
+    </div>
+    <div class="bloc-inner">
+      <div class="bloc-icon">${cfg.icon}</div>
+      <div class="bloc-title">${cfg.title}</div>
+      <div class="bloc-desc">${type === 'rang' ? getRank(SP_getPoints(userId)).name : cfg.desc}</div>
+      ${extra}
+    </div>`;
+
+  grid.appendChild(el);
+}
+
+// ========== EDIT ==========
+function toggleEdit() {
+  editMode = !editMode;
+  document.getElementById('editBtn').classList.toggle('on', editMode);
+
+  const blocs = document.querySelectorAll('.bloc');
+  blocs.forEach(b => {
+    if (!b.classList.contains('bloc-locked')) b.classList.toggle('editing', editMode);
+  });
+
+  const menu = document.getElementById('addMenu');
+  if (editMode) {
+    menu.classList.add('show');
+    renderAddMenu();
+    enableSort();
+  } else {
+    menu.classList.remove('show');
+    disableSort();
+    saveLayout();
+    // Fermer tous les size menus ouverts
+    document.querySelectorAll('.size-menu.show').forEach(m => m.classList.remove('show'));
+  }
+}
+
+function renderAddMenu() {
+  const menu = document.getElementById('addMenu');
+  // garder le header
+  const header = menu.querySelector('.add-header');
+  menu.innerHTML = '';
+  menu.appendChild(header || Object.assign(document.createElement('div'),{className:'add-header',textContent:'AJOUTER UN BLOC'}));
+
+  Object.keys(BLOCS).forEach(type => {
+    const cfg = BLOCS[type];
+    if (CU.status === 'FREE' && !cfg.free) return;
+    const item = document.createElement('div');
+    item.className = 'add-item';
+    item.innerHTML = `<div class="add-item-icon">${cfg.icon}</div><div class="add-item-name">${cfg.title}</div>`;
+    item.onclick = () => {
+      const empty = document.getElementById('emptyState');
+      const grid = document.getElementById('grid');
+      if (empty) { empty.remove(); grid.classList.remove('empty'); }
+      addBloc(type, cfg.def);
+      saveLayout();
+    };
+    menu.appendChild(item);
+  });
+}
+
+function deleteBloc(btn) {
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML=`<div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px;max-width:320px;width:100%;text-align:center;"><div style="font-size:40px;margin-bottom:10px;">🗑️</div><div style="font-size:18px;font-weight:800;margin-bottom:6px;">Supprimer ce bloc ?</div><div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">Il pourra être rajouté depuis la bibliothèque.</div><div style="display:flex;gap:10px;"><button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;cursor:pointer;">Annuler</button><button id="_dbb" style="flex:1;padding:12px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:12px;color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;">Supprimer</button></div></div>`;
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+  document.getElementById('_dbb').onclick=()=>{
+    ov.remove();
+    btn.closest('.bloc').remove();
+    saveLayout();
+    const blocs = document.querySelectorAll('.bloc');
+    if (blocs.length === 0) {
+      const grid = document.getElementById('grid');
+      grid.classList.add('empty');
+      grid.innerHTML = `<div class="empty-state" id="emptyState">
+        <div style="font-size:90px;margin-bottom:28px;opacity:0.7;">📦</div>
+        <div style="font-size:30px;font-weight:800;margin-bottom:10px;">Dashboard vide</div>
+        <div style="font-size:15px;color:rgba(255,255,255,0.45);max-width:360px;margin:0 auto 36px;line-height:1.6;">Ajoute des blocs pour personnaliser ton espace</div>
+        <button class="empty-btn" onclick="toggleEdit()">✨ Ajouter des blocs</button>
+      </div>`;
+    }
+  }
+}
+
+function toggleSizeMenu(btn) {
+  document.querySelectorAll('.size-menu').forEach(m => {
+    if (m !== btn.nextElementSibling) m.classList.remove('show');
+  });
+  const menu = btn.nextElementSibling;
+  menu.classList.toggle('show');
+  if (menu.classList.contains('show')) {
+    // Marquer la taille active
+    const bloc = btn.closest('.bloc');
+    const currentSize = bloc.dataset.size;
+    const sizeMap = {'s3':0,'s4':1,'s6':2,'s8':3,'s12':4};
+    menu.querySelectorAll('.size-opt').forEach((opt,i) => {
+      opt.classList.toggle('active-size', i === sizeMap[currentSize]);
+    });
+  }
+}
+
+function resizeBloc(opt, size) {
+  const bloc = opt.closest('.bloc');
+  ['s3','s4','s6','s8','s12'].forEach(c => bloc.classList.remove(c));
+  bloc.classList.add(size);
+  bloc.dataset.size = size;
+  opt.closest('.size-menu').classList.remove('show');
+  saveLayout();
+}
+
+// UNE SEULE saveLayout - écrit sous la même clé que loadDashKey lit
+function saveLayout() {
+  const blocs = Array.from(document.querySelectorAll('.bloc')).map(b => ({
+    type: b.dataset.type,
+    size: b.dataset.size,
+    height: b.dataset.height || b.style.minHeight || '180px'
+  }));
+  const key = `sp_dash_${userId}`;
+  localStorage.setItem(key, JSON.stringify(blocs));
+  localStorage.setItem(`scorepilot_dashboard_${userId}`, JSON.stringify(blocs));
+  localStorage.setItem(`scorepilot_dash_${userId}`, JSON.stringify(blocs));
+}
+
+function enableSort() {
+  sortable = Sortable.create(document.getElementById('grid'), {
+    animation: 200,
+    filter: '.bloc-locked,.empty-state',
+    onEnd: saveLayout
+  });
+}
+
+function disableSort() {
+  if (sortable) { sortable.destroy(); sortable = null; }
+}
+
+function toggleHeight(opt) {
+  const bloc = opt.closest('.bloc');
+  const current = bloc.dataset.height || '180px';
+  const newHeight = current === '180px' ? '320px' : '180px';
+  bloc.style.minHeight = newHeight;
+  bloc.dataset.height = newHeight;
+  opt.querySelector('span').textContent = newHeight === '320px' ? 'Haute ✓' : 'Ajuster hauteur';
+  opt.closest('.size-menu').classList.remove('show');
+  saveLayout();
+}
+
+// ========== NOTIFS ==========
+function getDefaultNotifs(status){
+  const base=[
+    {id:1,title:'🎉 Bienvenue sur ScorePilot',desc:'Configure ton dashboard pour commencer',time:'Maintenant',read:false,color:'#6366f1'}
+  ];
+  if(status==='FREE'){
+    base.push({id:2,title:'👑 Passe PRO',desc:'Débloque toutes les fonctionnalités premium',time:'Il y a 1h',read:false,color:'#f59e0b'});
+  }else if(status==='PRO'){
+    base.push({id:2,title:'✨ Merci d\'être PRO',desc:'Profite de toutes les fonctionnalités',time:'Il y a 2h',read:false,color:'#10b981'});
+  }else if(status==='COLLABORATEUR'){
+    base.push({id:2,title:'💜 Merci Collaborateur',desc:'Ton soutien compte énormément',time:'Il y a 2h',read:false,color:'#8b5cf6'});
+  }else if(status==='ADMIN'){
+    base.push({id:2,title:'👨‍💼 Panel Admin actif',desc:'Gère l\'app depuis le panel',time:'Il y a 1h',read:false,color:'#ef4444'});
+  }
+  return base;
+}
+
+let notifs=[];
+
+function loadNotifs(){
+  const saved=localStorage.getItem(`sp_notifs_${userId}`);
+  if(saved){
+    notifs=JSON.parse(saved);
+  }else{
+    notifs=getDefaultNotifs(CU.status);
+    localStorage.setItem(`sp_notifs_${userId}`,JSON.stringify(notifs));
+  }
+  renderNotifs();
+}
+
+function renderNotifs(){
+  const unread=notifs.filter(n=>!n.read).length;
+  document.getElementById('notifBadge').style.display=unread>0?'flex':'none';
+  document.getElementById('notifBadge').textContent=unread;
+
+  const list=document.getElementById('notifsList');
+  list.innerHTML='';
+
+  if(notifs.length===0){
+    const empty=document.createElement('div');
+    empty.style.cssText='text-align:center;padding:40px;color:rgba(255,255,255,0.3);';
+    empty.textContent='Aucune notification';
+    list.appendChild(empty);
+    return;
+  }
+
+  notifs.forEach(n=>{
+    const item=document.createElement('div');
+    item.className='notif-item'+(n.read?'':' unread');
+    item.style.borderLeftColor=n.color||'#6366f1';
+    item.onclick=()=>readNotif(n.id);
+
+    // Ligne titre avec icône via textContent (pas innerHTML) pour éviter l'encodage
+    const titleRow=document.createElement('div');
+    titleRow.className='notif-title';
+    titleRow.style.cssText='display:flex;align-items:center;gap:7px;';
+    if(n.icon){
+      const ico=document.createElement('span');
+      ico.textContent=n.icon; // textContent = emoji affiché correctement
+      titleRow.appendChild(ico);
+    }
+    const titleTxt=document.createElement('span');
+    titleTxt.textContent=n.title||'';
+    titleRow.appendChild(titleTxt);
+    item.appendChild(titleRow);
+
+    const desc=document.createElement('div');
+    desc.className='notif-desc';
+    desc.textContent=n.desc||n.message||'';
+    item.appendChild(desc);
+
+    const time=document.createElement('div');
+    time.className='notif-time';
+    time.textContent=n.time||'';
+    item.appendChild(time);
+
+    list.appendChild(item);
+  });
+}
+
+function toggleNotifs(){
+  const panel=document.getElementById('notifPanel');
+  panel.classList.toggle('show');
+}
+
+function readNotif(id){
+  const n=notifs.find(x=>x.id===id);
+  if(n){n.read=true;localStorage.setItem(`sp_notifs_${userId}`,JSON.stringify(notifs));renderNotifs();}
+}
+
+function markAllRead(){
+  notifs.forEach(n=>n.read=true);
+  localStorage.setItem(`sp_notifs_${userId}`,JSON.stringify(notifs));
+  renderNotifs();
+}
+
+function navigateBloc(url){
+  document.body.style.opacity='1';
+  document.body.style.transition='opacity 0.4s ease';
+  setTimeout(()=>{document.body.style.opacity='0';},50);
+  setTimeout(()=>{window.location.href=url;},450);
+}
+
+function showProModal(){
+  const existing=document.getElementById('_proModal');
+  if(existing)existing.remove();
+  const overlay=document.createElement('div');
+  overlay.id='_proModal';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML=`<div style="background:#111;border:1px solid rgba(139,92,246,0.3);border-radius:28px;padding:40px;max-width:440px;width:100%;text-align:center;animation:_pi 0.3s ease;box-shadow:0 0 60px rgba(99,102,241,0.15);"><style>@keyframes _pi{from{opacity:0;transform:scale(0.9) translateY(10px)}to{opacity:1;transform:none}}</style>
+  <div style="font-size:56px;margin-bottom:16px;">👑</div>
+  <div style="font-size:26px;font-weight:900;margin-bottom:8px;background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">ScorePilot PRO</div>
+  <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:28px;line-height:1.6;">Débloque toutes les fonctionnalités premium :<br>Prévisions IA avancées, Tracker illimité, Classement national.</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border-radius:12px;text-align:left;"><span style="font-size:20px;">🤖</span><span style="font-size:14px;">Isidor IA illimité + fichiers</span></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border-radius:12px;text-align:left;"><span style="font-size:20px;">📊</span><span style="font-size:14px;">Prévisions & plans personnalisés</span></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border-radius:12px;text-align:left;"><span style="font-size:20px;">🏆</span><span style="font-size:14px;">Classement & rang complet</span></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border-radius:12px;text-align:left;"><span style="font-size:20px;">🎓</span><span style="font-size:14px;">Certificats de maîtrise</span></div>
+  </div>
+  <div style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:14px;margin-bottom:24px;font-size:13px;color:rgba(255,255,255,0.6);">🔜 <strong style="color:white;">Bientôt disponible</strong> — Rejoins la liste d'attente !</div>
+  <div style="display:flex;gap:12px;">
+    <button onclick="document.getElementById('_proModal').remove()" style="flex:1;padding:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Fermer</button>
+    <button onclick="document.getElementById('_proModal').remove();(()=>{const t=document.createElement('div');t.style.cssText='position:fixed;bottom:28px;right:28px;background:#0a1a0a;border:1px solid rgba(16,185,129,0.4);border-radius:14px;padding:14px 22px;font-size:14px;font-weight:600;z-index:2000;color:white;box-shadow:0 8px 32px rgba(0,0,0,0.5);';t.textContent='✅ Tu seras notifié dès le lancement !';document.body.appendChild(t);setTimeout(()=>t.remove(),3000);})()" style="flex:1;padding:14px;background:linear-gradient(135deg,#8B5CF6,#6366f1);border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;">📩 Me notifier</button>
+  </div>
+</div>`;
+  overlay.onclick=e=>{ if(e.target===overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function logout() {
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML=`<div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:32px;max-width:340px;width:100%;text-align:center;animation:_pi 0.25s ease;">
+  <div style="font-size:44px;margin-bottom:12px;">👋</div>
+  <div style="font-size:20px;font-weight:800;margin-bottom:8px;">Se déconnecter ?</div>
+  <div style="font-size:14px;color:rgba(255,255,255,0.45);margin-bottom:24px;">Tu devras te reconnecter pour accéder à ton espace.</div>
+  <div style="display:flex;gap:10px;">
+    <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Annuler</button>
+    <button onclick="sessionStorage.clear();window.location.href='login-revolut.html'" style="flex:1;padding:13px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:12px;color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;">Déconnecter</button>
+  </div>
+</div>`;
+  document.body.appendChild(overlay);
+}
+
+</script>
+</body>
+</html>

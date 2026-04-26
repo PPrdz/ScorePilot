@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin — ScorePilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+:root{
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);--red-border:rgba(239,68,68,0.25);
+  --indigo:#6366f1;--indigo-dim:rgba(99,102,241,0.1);--indigo-border:rgba(99,102,241,0.25);
+  --gold:#f59e0b;--gold-dim:rgba(245,158,11,0.1);
+  --green:#10b981;--green-dim:rgba(16,185,129,0.1);
+  --purple:#8B5CF6;
+  --surface:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.07);
+  --muted:rgba(255,255,255,0.4);--dim:rgba(255,255,255,0.6);
+}
+body{background:#0a0a0a;color:white;min-height:100vh;-webkit-font-smoothing:antialiased;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;z-index:0;}
+#glow{position:fixed;top:0;left:0;width:100%;height:200px;background:linear-gradient(180deg,rgba(239,68,68,0.07) 0%,transparent 100%);pointer-events:none;z-index:0;}
+
+.layout{position:relative;z-index:1;display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:236px;flex-shrink:0;background:rgba(10,10,12,0.95);border-right:1px solid rgba(255,255,255,0.06);padding:22px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:8px 10px 22px;}
+.sb-logo-txt{font-size:17px;font-weight:900;background:linear-gradient(135deg,#4A90E2,#7B68EE);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sb-badge{font-size:8px;font-weight:800;padding:3px 7px;background:var(--red-dim);border:1px solid var(--red-border);border-radius:4px;color:var(--red);letter-spacing:1px;}
+.nav-sec{font-size:9px;font-weight:700;color:rgba(255,255,255,0.22);letter-spacing:2px;text-transform:uppercase;padding:10px 10px 5px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all 0.18s;font-size:13px;font-weight:500;color:rgba(255,255,255,0.42);border:1px solid transparent;margin-bottom:2px;}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:white;}
+.nav-item.on{background:var(--red-dim);color:white;border-color:var(--red-border);}
+.nav-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.nav-lbl{flex:1;}
+.nav-cnt{font-size:10px;font-weight:800;padding:1px 6px;background:rgba(255,255,255,0.07);border-radius:100px;color:rgba(255,255,255,0.4);}
+.nav-item.on .nav-cnt{background:rgba(239,68,68,0.2);color:#fca5a5;}
+.nav-sep{height:1px;background:rgba(255,255,255,0.05);margin:8px 0;}
+.sb-back{margin-top:auto;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:12px;color:rgba(255,255,255,0.38);transition:all 0.18s;}
+.sb-back:hover{background:rgba(255,255,255,0.07);color:white;}
+
+/* MAIN */
+.main{flex:1;padding:30px 34px;overflow-x:hidden;min-width:0;}
+.page{display:none;animation:fadeIn 0.22s ease;}
+.page.on{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}
+.pg-header{margin-bottom:24px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+.pg-title{font-size:22px;font-weight:900;margin-bottom:3px;}
+.pg-sub{font-size:12px;color:var(--muted);}
+.pg-actions{display:flex;gap:7px;flex-shrink:0;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;position:relative;overflow:hidden;transition:all 0.22s;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity 0.3s;}
+.stat:hover::before{opacity:1;}
+.stat:hover{border-color:rgba(255,255,255,0.11);background:rgba(255,255,255,0.04);}
+.stat.c-red::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.stat.c-indigo::before{background:linear-gradient(90deg,transparent,var(--indigo),transparent);}
+.stat.c-gold::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.stat.c-green::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.stat-ico{font-size:22px;margin-bottom:8px;}
+.stat-val{font-size:26px;font-weight:900;line-height:1;margin-bottom:3px;}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:16px;}
+.card-hd{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.card-title{font-size:14px;font-weight:700;}
+.card-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* TABLE */
+.search-box{display:flex;align-items:center;gap:7px;padding:8px 13px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:9px;}
+.search-box input{background:transparent;border:none;outline:none;color:white;font-size:12px;width:180px;}
+.search-box input::placeholder{color:rgba(255,255,255,0.22);}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 18px;text-align:left;font-size:10px;font-weight:700;color:rgba(255,255,255,0.28);text-transform:uppercase;letter-spacing:1px;background:rgba(0,0,0,0.15);}
+td{padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.015);}
+.uc{display:flex;align-items:center;gap:11px;}
+.av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.u-name{font-weight:600;font-size:12px;}
+.u-email{font-size:10px;color:var(--muted);margin-top:1px;}
+.badge{padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:0.4px;display:inline-block;}
+.badge-ADMIN{background:var(--red-dim);color:var(--red);border:1px solid var(--red-border);}
+.badge-COLLABORATEUR{background:rgba(139,92,246,0.1);color:#a78bfa;border:1px solid rgba(139,92,246,0.22);}
+.badge-PRO{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(245,158,11,0.22);}
+.badge-FREE{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.38);border:1px solid rgba(255,255,255,0.07);}
+.rr-v{font-size:13px;font-weight:800;color:var(--indigo);}
+.rr-l{font-size:10px;color:var(--muted);margin-left:2px;}
+.acts{display:flex;gap:4px;}
+.ab{padding:4px 10px;border:1px solid rgba(255,255,255,0.09);border-radius:6px;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.ab:hover{background:rgba(255,255,255,0.08);color:white;}
+.ab.i{border-color:var(--indigo-border);color:#818cf8;}.ab.i:hover{background:var(--indigo-dim);}
+.ab.g{border-color:rgba(16,185,129,0.18);color:#6ee7b7;}.ab.g:hover{background:var(--green-dim);}
+.ab.d{border-color:rgba(239,68,68,0.12);color:rgba(239,68,68,0.65);}.ab.d:hover{background:var(--red-dim);color:var(--red);}
+.empty-r{text-align:center;padding:40px;color:rgba(255,255,255,0.22);font-size:12px;}
+
+/* RANK ROW */
+.rank-row{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.rank-row:last-child{border-bottom:none;}
+.rank-pos{width:30px;text-align:center;font-size:12px;font-weight:800;color:var(--muted);}
+.rank-pos.top{color:var(--gold);}
+.rank-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.rank-info{flex:1;}
+.rank-name{font-size:12px;font-weight:600;margin-bottom:2px;}
+.rank-pts{font-size:14px;font-weight:900;color:var(--indigo);}
+
+/* ACTIVITY */
+.act-item{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.act-item:last-child{border-bottom:none;}
+.act-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.act-dot.g{background:var(--green);box-shadow:0 0 5px var(--green);}
+.act-dot.b{background:#60a5fa;box-shadow:0 0 5px #60a5fa;}
+.act-dot.o{background:var(--gold);box-shadow:0 0 5px var(--gold);}
+.act-dot.r{background:var(--red);box-shadow:0 0 5px var(--red);}
+.act-txt{flex:1;font-size:12px;color:rgba(255,255,255,0.65);}
+.act-txt strong{color:white;}
+.act-time{font-size:10px;color:var(--muted);}
+
+/* QUICK ACTIONS */
+.qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.qa{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;cursor:pointer;transition:all 0.22s;text-align:center;}
+.qa:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.11);transform:translateY(-2px);}
+.qa-ico{font-size:26px;margin-bottom:8px;}
+.qa-lbl{font-size:12px;font-weight:700;margin-bottom:2px;}
+.qa-sub{font-size:10px;color:var(--muted);}
+
+/* NOTIF FORM */
+.nf{padding:20px;}
+.fl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;display:block;}
+.fi,.fs,.fta{width:100%;padding:10px 13px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:9px;color:white;font-size:12px;outline:none;transition:border-color 0.18s;font-family:'Inter',sans-serif;margin-bottom:14px;}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--indigo-border);}
+.fs option{background:#111;}
+.fta{resize:vertical;min-height:64px;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.epicker{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;margin-bottom:14px;}
+.eopt{width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;border-radius:7px;cursor:pointer;border:2px solid transparent;background:rgba(255,255,255,0.04);transition:all 0.12s;}
+.eopt:hover{background:rgba(255,255,255,0.08);}
+.eopt.on{border-color:var(--indigo);background:var(--indigo-dim);}
+
+/* BUTTONS */
+.btn-p{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:9px;color:white;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.18s;}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(99,102,241,0.38);}
+.btn-g{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:9px;color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.18s;}
+.btn-g:hover{background:rgba(255,255,255,0.09);color:white;}
+
+/* TOGGLE */
+.tog{width:38px;height:20px;background:rgba(255,255,255,0.1);border-radius:100px;cursor:pointer;position:relative;transition:background 0.22s;flex-shrink:0;}
+.tog.on{background:var(--green);}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:white;border-radius:50%;transition:transform 0.22s;}
+.tog.on::after{transform:translateX(18px);}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(14px);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.ov.show{display:flex;animation:ovIn 0.18s ease;}
+@keyframes ovIn{from{opacity:0;}to{opacity:1;}}
+.modal{background:#111;border:1px solid rgba(255,255,255,0.09);border-radius:20px;padding:28px;width:100%;max-width:480px;animation:mIn 0.22s ease;}
+@keyframes mIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:none}}
+.mhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.mt{font-size:17px;font-weight:800;display:flex;align-items:center;gap:9px;}
+.mc{width:28px;height:28px;background:rgba(255,255,255,0.06);border:none;border-radius:7px;color:white;cursor:pointer;font-size:13px;transition:all 0.12s;}
+.mc:hover{background:rgba(255,255,255,0.11);}
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.ic{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.05);border-radius:9px;padding:11px;}
+.il{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+.iv{font-size:12px;font-weight:600;word-break:break-all;}
+.mbtns{display:flex;gap:7px;margin-top:14px;}
+.mbtn{flex:1;padding:11px;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.18s;}
+.mb-cancel{background:rgba(255,255,255,0.06);color:white;border:1px solid rgba(255,255,255,0.09);}
+.mb-cancel:hover{background:rgba(255,255,255,0.1);}
+.mb-p{background:linear-gradient(135deg,#6366f1,#818cf8);color:white;}
+.mb-p:hover{box-shadow:0 4px 12px rgba(99,102,241,0.38);}
+.mb-d{background:linear-gradient(135deg,#ef4444,#dc2626);color:white;}
+.mb-d:hover{box-shadow:0 4px 12px rgba(239,68,68,0.38);}
+.msel{width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:9px;color:white;font-size:12px;outline:none;margin-bottom:9px;}
+.msel option{background:#111;}
+.role-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;background:var(--indigo-dim);border:1px solid var(--indigo-border);border-radius:6px;font-size:10px;font-weight:600;margin:3px;color:#818cf8;}
+.role-tag button{background:none;border:none;color:rgba(239,68,68,0.5);cursor:pointer;font-size:10px;padding:0 0 0 2px;transition:color 0.12s;}
+.role-tag button:hover{color:var(--red);}
+.rr-row{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+.rr-inp{flex:1;padding:9px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:9px;color:white;font-size:14px;font-weight:700;outline:none;}
+.rr-inp:focus{border-color:var(--indigo-border);}
+.rr-q{padding:7px 10px;background:var(--indigo-dim);border:1px solid var(--indigo-border);border-radius:7px;color:#818cf8;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s;}
+.rr-q:hover{background:rgba(99,102,241,0.2);}
+.rr-presets{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;padding:11px 16px;border-radius:11px;font-size:12px;font-weight:600;z-index:1000;transform:translateY(10px);opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{background:#081a08;border:1px solid rgba(16,185,129,0.4);color:white;}
+.toast.error{background:#1a0808;border:1px solid rgba(239,68,68,0.4);color:white;}
+.toast.info{background:#08081a;border:1px solid var(--indigo-border);color:white;}
+</style>
+</head>
+<body>
+<div id="glow"></div>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-txt">ScorePilot</div>
+      <div class="sb-badge">ADMIN</div>
+    </div>
+    <div class="nav-sec">Principal</div>
+    <div class="nav-item on" data-pg="overview" onclick="nav(this,'overview')"><span class="nav-ico">📊</span><span class="nav-lbl">Vue d'ensemble</span></div>
+    <div class="nav-item" data-pg="users" onclick="nav(this,'users')"><span class="nav-ico">👥</span><span class="nav-lbl">Utilisateurs</span><span class="nav-cnt" id="cntU">0</span></div>
+    <div class="nav-item" data-pg="roles" onclick="nav(this,'roles')"><span class="nav-ico">🎭</span><span class="nav-lbl">Rôles & Accès</span><span class="nav-cnt" id="cntR">0</span></div>
+    <div class="nav-item" data-pg="rank" onclick="nav(this,'rank')"><span class="nav-ico">🏆</span><span class="nav-lbl">Classement</span></div>
+    <div class="nav-sep"></div>
+    <div class="nav-sec">Contenu</div>
+    <div class="nav-item" data-pg="notifs" onclick="nav(this,'notifs')"><span class="nav-ico">📢</span><span class="nav-lbl">Notifications</span></div>
+    <div class="nav-item" onclick="window.location.href='notifs-admin.html'"><span class="nav-ico">🔔</span><span class="nav-lbl">Notifs avancées ↗</span></div>
+    <div class="nav-sep"></div>
+    <div class="nav-sec">Système</div>
+    <div class="nav-item" data-pg="settings" onclick="nav(this,'settings')"><span class="nav-ico">⚙️</span><span class="nav-lbl">Paramètres</span></div>
+    <div class="sb-back" onclick="window.location.href='dashboard.html'"><span>←</span> Dashboard</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div class="page on" id="pgOverview">
+      <div class="pg-header">
+        <div><div class="pg-title">Vue d'ensemble</div><div class="pg-sub">Tableau de bord administrateur</div></div>
+        <button class="btn-g" onclick="loadAll()">↻ Actualiser</button>
+      </div>
+      <div class="stats">
+        <div class="stat c-red"><div class="stat-ico">👥</div><div class="stat-val" id="ovTot">0</div><div class="stat-lbl">Utilisateurs</div></div>
+        <div class="stat c-indigo"><div class="stat-ico">💎</div><div class="stat-val" id="ovPro" style="color:var(--gold);">0</div><div class="stat-lbl">Abonnés PRO+</div></div>
+        <div class="stat c-gold"><div class="stat-ico">🔗</div><div class="stat-val" id="ovED" style="color:var(--green);">0</div><div class="stat-lbl">EcoleDirecte</div></div>
+        <div class="stat c-green"><div class="stat-ico">🏆</div><div class="stat-val" id="ovRR" style="color:var(--indigo);">0</div><div class="stat-lbl">Moy. RR</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+        <div class="card"><div class="card-hd"><div><div class="card-title">⚡ Activité</div></div></div><div id="actFeed"></div></div>
+        <div class="card"><div class="card-hd"><div class="card-title">🏆 Top classement</div></div><div id="ovLb"></div></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Actions rapides</div>
+      <div class="qa-grid">
+        <div class="qa" onclick="nav(document.querySelector('[data-pg=users]'),'users')"><div class="qa-ico">👥</div><div class="qa-lbl">Gérer utilisateurs</div><div class="qa-sub">Voir tous les comptes</div></div>
+        <div class="qa" onclick="nav(document.querySelector('[data-pg=notifs]'),'notifs')"><div class="qa-ico">📢</div><div class="qa-lbl">Envoyer notif</div><div class="qa-sub">Notification globale</div></div>
+        <div class="qa" onclick="nav(document.querySelector('[data-pg=rank]'),'rank')"><div class="qa-ico">🏆</div><div class="qa-lbl">Classement</div><div class="qa-sub">Gérer les points RR</div></div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="pgUsers">
+      <div class="pg-header">
+        <div><div class="pg-title">👥 Utilisateurs</div><div class="pg-sub">Gestion de tous les comptes</div></div>
+        <div class="search-box">🔍<input id="searchInp" placeholder="Rechercher..." oninput="filterUsers()"></div>
+      </div>
+      <div class="stats">
+        <div class="stat c-red"><div class="stat-ico">👥</div><div class="stat-val" id="sTot">0</div><div class="stat-lbl">Total</div></div>
+        <div class="stat c-indigo"><div class="stat-ico">💎</div><div class="stat-val" id="sPro" style="color:var(--gold);">0</div><div class="stat-lbl">PRO+</div></div>
+        <div class="stat c-gold"><div class="stat-ico">🏆</div><div class="stat-val" id="sRR" style="color:var(--indigo);">0</div><div class="stat-lbl">Moy. RR</div></div>
+        <div class="stat c-green"><div class="stat-ico">🔗</div><div class="stat-val" id="sED" style="color:var(--green);">0</div><div class="stat-lbl">ED Connectés</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Tous les comptes</div></div>
+        <table><thead><tr><th>Utilisateur</th><th>Statut</th><th>RR</th><th>ED</th><th>Inscrit</th><th>Actions</th></tr></thead>
+        <tbody id="uTbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ROLES -->
+    <div class="page" id="pgRoles">
+      <div class="pg-header"><div><div class="pg-title">🎭 Rôles & Accès</div><div class="pg-sub">Attribution et gestion des rôles</div></div></div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Utilisateurs avec rôles actifs</div></div>
+        <table><thead><tr><th>Utilisateur</th><th>Rôle</th><th>Expiration</th><th>Actions</th></tr></thead>
+        <tbody id="rTbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- RANK -->
+    <div class="page" id="pgRank">
+      <div class="pg-header">
+        <div><div class="pg-title">🏆 Classement</div><div class="pg-sub">Gestion des points RR</div></div>
+        <button class="btn-g" onclick="openRRReset()">🔄 Reset classement</button>
+      </div>
+      <div class="card"><div class="card-hd"><div class="card-title">Classement global</div></div><div id="rankList"></div></div>
+    </div>
+
+    <!-- NOTIFS -->
+    <div class="page" id="pgNotifs">
+      <div class="pg-header"><div><div class="pg-title">📢 Notifications</div><div class="pg-sub">Envoyer des messages à tous les utilisateurs</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Composer</div></div>
+          <div class="nf">
+            <div style="margin-bottom:12px;"><label class="fl">Emoji</label><div class="epicker" id="emojiPick">
+              <div class="eopt on" data-e="🎯">🎯</div><div class="eopt" data-e="🏆">🏆</div>
+              <div class="eopt" data-e="🚀">🚀</div><div class="eopt" data-e="⚡">⚡</div>
+              <div class="eopt" data-e="🔔">🔔</div><div class="eopt" data-e="💡">💡</div>
+              <div class="eopt" data-e="🎓">🎓</div><div class="eopt" data-e="⚠️">⚠️</div>
+              <div class="eopt" data-e="✨">✨</div><div class="eopt" data-e="🔥">🔥</div>
+            </div></div>
+            <div class="fg">
+              <div><label class="fl">Titre</label><input class="fi" id="nTitle" placeholder="Ex: Mise à jour..."></div>
+              <div><label class="fl">Type</label><select class="fs" id="nType"><option value="info">ℹ️ Info</option><option value="success">✅ Succès</option><option value="warning">⚠️ Avertissement</option><option value="rank">🏆 Rang</option><option value="promo">💎 Promo</option></select></div>
+            </div>
+            <div><label class="fl">Message</label><textarea class="fta" id="nMsg" placeholder="Contenu..."></textarea></div>
+            <div><label class="fl">Destinataires</label><select class="fs" id="nTarget" style="margin-bottom:14px;"><option value="all">Tous</option><option value="pro">PRO+</option><option value="free">FREE</option><option value="ed">EcoleDirecte connecté</option></select></div>
+            <div style="display:flex;gap:8px;"><button class="btn-p" onclick="sendNotif()">📢 Envoyer</button><button class="btn-g" onclick="previewNotif()">👁 Aperçu</button></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Aperçu</div></div>
+            <div style="padding:16px;">
+              <div id="nPrev" style="background:var(--indigo-dim);border:1px solid var(--indigo-border);border-radius:12px;padding:14px;">
+                <div style="display:flex;align-items:flex-start;gap:10px;"><span style="font-size:20px;" id="pEmo">🎯</span><div><div style="font-size:13px;font-weight:700;margin-bottom:3px;" id="pTit">Titre</div><div style="font-size:11px;color:rgba(255,255,255,0.5);" id="pMsg">Message...</div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <div class="card-hd"><div class="card-title">Historique</div></div>
+            <div id="nHist" style="padding:14px 18px;font-size:12px;color:var(--muted);">Aucune notification</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="pgSettings">
+      <div class="pg-header"><div><div class="pg-title">⚙️ Paramètres</div><div class="pg-sub">Configuration de la plateforme</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Plateforme</div></div>
+          <div style="padding:18px;display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:13px;font-weight:600;margin-bottom:2px;">Mode maintenance</div><div style="font-size:11px;color:var(--muted);">Bloquer l'accès</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:13px;font-weight:600;margin-bottom:2px;">Inscriptions ouvertes</div><div style="font-size:11px;color:var(--muted);">Nouveaux comptes</div></div><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:13px;font-weight:600;margin-bottom:2px;">Debug mode</div><div style="font-size:11px;color:var(--muted);">Logs console</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Données</div></div>
+          <div style="padding:18px;display:flex;flex-direction:column;gap:8px;">
+            <button class="btn-g" onclick="exportData()">📥 Exporter les données</button>
+            <button class="btn-g" onclick="if(confirm('Nettoyer les rôles expirés ?'))cleanExpired()">🧹 Nettoyer expirations</button>
+            <button class="btn-g" style="border-color:var(--red-border);color:rgba(239,68,68,0.65);" onclick="if(confirm('DANGER: Reset TOTAL ?'))resetAll()">⚠️ Reset total</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL DETAILS -->
+<div class="ov" id="mDetails" onclick="if(event.target===this)closeM('mDetails')">
+  <div class="modal"><div class="mhd"><div class="mt">📊 Profil utilisateur</div><button class="mc" onclick="closeM('mDetails')">✕</button></div>
+  <div id="detCont"></div>
+  <div class="mbtns"><button class="mbtn mb-cancel" onclick="closeM('mDetails')">Fermer</button><button class="mbtn mb-p" id="detRoleBtn">🎭 Rôles</button></div></div>
+</div>
+
+<!-- MODAL ROLES -->
+<div class="ov" id="mRoles" onclick="if(event.target===this)closeM('mRoles')">
+  <div class="modal"><div class="mhd"><div class="mt">🎭 Gérer les rôles</div><button class="mc" onclick="closeM('mRoles')">✕</button></div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:12px;" id="rolesMN"></div>
+  <div style="margin-bottom:12px;"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;">Rôles actifs</div><div id="activeRC"></div></div>
+  <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;">Ajouter</div>
+  <select class="msel" id="newRoleSel"><option value="">Choisir...</option><option value="PRO">👑 PRO</option><option value="COLLABORATEUR">💜 COLLABORATEUR</option><option value="ADMIN">🔴 ADMIN</option></select>
+  <select class="msel" id="roleDurSel"><option value="7">7 jours</option><option value="30">30 jours</option><option value="90">3 mois</option><option value="365">1 an</option><option value="-1">♾️ À vie</option></select>
+  <div class="mbtns"><button class="mbtn mb-cancel" onclick="closeM('mRoles')">Fermer</button><button class="mbtn mb-p" onclick="addRole()">Ajouter</button></div></div>
+</div>
+
+<!-- MODAL RR -->
+<div class="ov" id="mRR" onclick="if(event.target===this)closeM('mRR')">
+  <div class="modal" style="max-width:360px;"><div class="mhd"><div class="mt">🏆 Modifier RR</div><button class="mc" onclick="closeM('mRR')">✕</button></div>
+  <div style="font-size:13px;font-weight:600;margin-bottom:12px;" id="rrMN"></div>
+  <div class="rr-row"><input class="rr-inp" type="number" id="rrInp" min="0"><div style="display:flex;flex-direction:column;gap:4px;"><button class="rr-q" onclick="adjRR(+100)">+100</button><button class="rr-q" onclick="adjRR(-100)">-100</button></div></div>
+  <div class="rr-presets"><button class="rr-q" onclick="setRR(0)">Reset</button><button class="rr-q" onclick="setRR(500)">500</button><button class="rr-q" onclick="setRR(1000)">1000</button><button class="rr-q" onclick="setRR(2400)">GC</button></div>
+  <div class="mbtns"><button class="mbtn mb-cancel" onclick="closeM('mRR')">Annuler</button><button class="mbtn mb-p" onclick="saveRR()">Sauvegarder</button></div></div>
+</div>
+
+<!-- MODAL DELETE -->
+<div class="ov" id="mDel" onclick="if(event.target===this)closeM('mDel')">
+  <div class="modal" style="max-width:340px;text-align:center;">
+    <div style="font-size:40px;margin-bottom:8px;">🗑️</div>
+    <div class="mt" style="justify-content:center;margin-bottom:8px;">Supprimer ce compte ?</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;">Toutes les données de <strong id="delName"></strong> seront supprimées. Irréversible.</div>
+    <div class="mbtns"><button class="mbtn mb-cancel" onclick="closeM('mDel')">Annuler</button><button class="mbtn mb-d" onclick="confirmDel()">Supprimer</button></div>
+  </div>
+</div>
+
+<!-- MODAL RESET RR -->
+<div class="ov" id="mRRReset" onclick="if(event.target===this)closeM('mRRReset')">
+  <div class="modal" style="max-width:340px;text-align:center;">
+    <div style="font-size:40px;margin-bottom:8px;">🔄</div>
+    <div class="mt" style="justify-content:center;margin-bottom:8px;">Reset classement ?</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px;">Remet tous les points RR à 0. Irréversible.</div>
+    <div class="mbtns"><button class="mbtn mb-cancel" onclick="closeM('mRRReset')">Annuler</button><button class="mbtn mb-d" onclick="confirmRRReset()">Reset</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allUsers=[],editU=null,delU=null,editRR=null,selEmo='🎯',nHist=[];
+
+// ── LOAD ──────────────────────────────────────────────────────────────
+function loadAll(){
+  loadUsers();
+  renderOverview();renderUsers(allUsers);renderRoles();renderRank();
+  document.getElementById('cntU').textContent=allUsers.length;
+  document.getElementById('cntR').textContent=allUsers.filter(u=>u.roles.length>0).length;
+}
+function loadUsers(){
+  const seen=new Set(); const users=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i); if(!k) continue;
+    const uid=k.startsWith('scorepilot_user_')?k.replace('scorepilot_user_',''):
+               k.startsWith('sp_user_')?k.replace('sp_user_',''):null;
+    if(!uid||seen.has(uid))continue; seen.add(uid);
+    try{
+      const data=JSON.parse(localStorage.getItem(k));
+      if(!data||typeof data!=='object')continue;
+      const rRaw=localStorage.getItem(`scorepilot_roles_${uid}`)||localStorage.getItem(`sp_roles_${uid}`);
+      let roles=rRaw?JSON.parse(rRaw).filter(r=>r.expiresAt===-1||r.expiresAt>Date.now()):[];
+      const prio={ADMIN:3,COLLABORATEUR:2,PRO:1};
+      roles.sort((a,b)=>(prio[b.role]||0)-(prio[a.role]||0));
+      let status=data.status||data.role?.toUpperCase()||'FREE';
+      if(uid==='ayman'||uid==='admin_ayman')status='ADMIN';
+      else if(roles.length)status=roles[0].role;
+      const pts=parseInt(localStorage.getItem(`sp_points_${uid}`)||localStorage.getItem(`scorepilot_points_${uid}`)||0);
+      const hasED=!!(localStorage.getItem(`sp_ed_${uid}`)||localStorage.getItem(`scorepilot_ed_${uid}`));
+      users.push({uid,data,roles,status,points:pts,hasED});
+    }catch(_){}
+  }
+  allUsers=users;
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────
+function renderOverview(){
+  const tot=allUsers.length,pro=allUsers.filter(u=>['PRO','COLLABORATEUR','ADMIN'].includes(u.status)).length;
+  const ed=allUsers.filter(u=>u.hasED).length,avgRR=tot?Math.round(allUsers.reduce((s,u)=>s+u.points,0)/tot):0;
+  document.getElementById('ovTot').textContent=tot;document.getElementById('ovPro').textContent=pro;
+  document.getElementById('ovED').textContent=ed;document.getElementById('ovRR').textContent=avgRR;
+  // Activity
+  document.getElementById('actFeed').innerHTML=`
+    <div class="act-item"><div class="act-dot g"></div><div class="act-txt">Panel chargé</div><div class="act-time">maintenant</div></div>
+    <div class="act-item"><div class="act-dot b"></div><div class="act-txt"><strong>${tot}</strong> utilisateur(s) trouvé(s)</div><div class="act-time">maintenant</div></div>
+    <div class="act-item"><div class="act-dot o"></div><div class="act-txt"><strong>${pro}</strong> abonné(s) PRO+</div><div class="act-time">maintenant</div></div>`;
+  // Leaderboard
+  const sorted=[...allUsers].sort((a,b)=>b.points-a.points).slice(0,5);
+  document.getElementById('ovLb').innerHTML=sorted.length?sorted.map((u,i)=>`
+    <div class="rank-row"><div class="rank-pos ${i<3?'top':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+    <div class="rank-av">${(u.data.name||'?').charAt(0).toUpperCase()}</div>
+    <div class="rank-info"><div class="rank-name">${esc(u.data.name||u.uid)}</div>${rankBadge(u.points)}</div>
+    <div class="rank-pts">${u.points}</div></div>`).join(''):'<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Aucune donnée</div>';
+}
+
+// ── USERS ─────────────────────────────────────────────────────────────
+function renderUsers(users){
+  document.getElementById('sTot').textContent=allUsers.length;
+  document.getElementById('sPro').textContent=allUsers.filter(u=>['PRO','COLLABORATEUR','ADMIN'].includes(u.status)).length;
+  document.getElementById('sRR').textContent=allUsers.length?Math.round(allUsers.reduce((s,u)=>s+u.points,0)/allUsers.length):0;
+  document.getElementById('sED').textContent=allUsers.filter(u=>u.hasED).length;
+  const tbody=document.getElementById('uTbody');
+  if(!users.length){tbody.innerHTML=`<tr><td colspan="6" class="empty-r">Aucun utilisateur • Les comptes apparaissent après connexion</td></tr>`;return;}
+  tbody.innerHTML=users.map(u=>{
+    const name=u.data.name||u.uid,email=u.data.email||'—',date=u.data.createdAt?new Date(u.data.createdAt).toLocaleDateString('fr-FR'):'—';
+    return `<tr><td><div class="uc"><div class="av">${name.charAt(0).toUpperCase()}</div><div><div class="u-name">${esc(name)}</div><div class="u-email">${esc(email)}</div></div></div></td>
+    <td><span class="badge badge-${u.status}">${u.status}</span></td>
+    <td><span class="rr-v">${u.points}</span><span class="rr-l">RR</span></td>
+    <td>${u.hasED?'✅':'—'}</td><td style="color:var(--muted);font-size:11px;">${date}</td>
+    <td><div class="acts"><button class="ab" onclick="openDet('${esc(u.uid)}')">Voir</button><button class="ab i" onclick="openRoles('${esc(u.uid)}')">Rôles</button><button class="ab g" onclick="openRR('${esc(u.uid)}')">RR</button><button class="ab d" onclick="openDel('${esc(u.uid)}')">🗑️</button></div></td></tr>`;
+  }).join('');
+}
+function filterUsers(){
+  const q=document.getElementById('searchInp').value.toLowerCase();
+  renderUsers(q?allUsers.filter(u=>(u.data.name||'').toLowerCase().includes(q)||(u.data.email||'').toLowerCase().includes(q)||u.status.toLowerCase().includes(q)):allUsers);
+}
+
+// ── ROLES ─────────────────────────────────────────────────────────────
+function renderRoles(){
+  const wr=allUsers.filter(u=>u.roles.length>0);
+  const tbody=document.getElementById('rTbody');
+  if(!wr.length){tbody.innerHTML=`<tr><td colspan="4" class="empty-r">Aucun rôle attribué</td></tr>`;return;}
+  tbody.innerHTML=wr.map(u=>{const r=u.roles[0];const exp=r.expiresAt===-1?'♾️ À vie':new Date(r.expiresAt).toLocaleDateString('fr-FR');
+    return `<tr><td><div class="uc"><div class="av">${(u.data.name||'?').charAt(0).toUpperCase()}</div><div class="u-name">${esc(u.data.name||u.uid)}</div></div></td>
+    <td><span class="badge badge-${r.role}">${r.role}</span></td><td style="font-size:11px;color:var(--muted);">${exp}</td>
+    <td><button class="ab i" onclick="openRoles('${esc(u.uid)}')">Modifier</button></td></tr>`;}).join('');
+}
+
+// ── RANK ──────────────────────────────────────────────────────────────
+function renderRank(){
+  const sorted=[...allUsers].sort((a,b)=>b.points-a.points);
+  document.getElementById('rankList').innerHTML=sorted.length?sorted.map((u,i)=>`
+    <div class="rank-row"><div class="rank-pos ${i<3?'top':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+    <div class="rank-av">${(u.data.name||'?').charAt(0).toUpperCase()}</div>
+    <div class="rank-info"><div class="rank-name">${esc(u.data.name||u.uid)}</div><div style="display:flex;gap:4px;margin-top:2px;">${rankBadge(u.points)}<span class="badge badge-${u.status}">${u.status}</span></div></div>
+    <div style="display:flex;align-items:center;gap:7px;"><div class="rank-pts">${u.points}</div>
+    <button class="ab g" onclick="openRR('${esc(u.uid)}')">✏️</button></div></div>`).join(''):'<div style="padding:28px;text-align:center;color:var(--muted);font-size:12px;">Aucune donnée</div>';
+}
+
+// ── DETAILS ───────────────────────────────────────────────────────────
+function openDet(uid){const u=allUsers.find(x=>x.uid===uid);if(!u)return;editU=u;
+  document.getElementById('detCont').innerHTML=`<div class="igrid">
+    <div class="ic"><div class="il">Nom</div><div class="iv">${esc(u.data.name||'—')}</div></div>
+    <div class="ic"><div class="il">Email</div><div class="iv">${esc(u.data.email||'—')}</div></div>
+    <div class="ic"><div class="il">Statut</div><div class="iv"><span class="badge badge-${u.status}">${u.status}</span></div></div>
+    <div class="ic"><div class="il">Points RR</div><div class="iv" style="color:var(--indigo);">${u.points}</div></div>
+    <div class="ic"><div class="il">Classe</div><div class="iv">${esc(u.data.class||u.data.filiere||'—')}</div></div>
+    <div class="ic"><div class="il">EcoleDirecte</div><div class="iv" style="color:${u.hasED?'var(--green)':'var(--muted)'};">${u.hasED?'✓ Connecté':'Non connecté'}</div></div>
+  </div>`;
+  document.getElementById('detRoleBtn').onclick=()=>{closeM('mDetails');openRoles(uid);};
+  openM('mDetails');
+}
+
+// ── RR ────────────────────────────────────────────────────────────────
+function openRR(uid){const u=allUsers.find(x=>x.uid===uid);if(!u)return;editRR=u;
+  document.getElementById('rrMN').textContent=u.data.name||uid;
+  document.getElementById('rrInp').value=u.points;openM('mRR');}
+function adjRR(d){const i=document.getElementById('rrInp');i.value=Math.max(0,parseInt(i.value||0)+d);}
+function setRR(v){document.getElementById('rrInp').value=v;}
+function saveRR(){if(!editRR)return;
+  const pts=Math.max(0,parseInt(document.getElementById('rrInp').value||0));
+  const uid=editRR.uid; editRR.points=pts;
+  localStorage.setItem(`sp_points_${uid}`,pts);localStorage.setItem(`scorepilot_points_${uid}`,pts);
+  const rk=JSON.parse(localStorage.getItem(`sp_rank_${uid}`)||'{}');rk.points=pts;
+  localStorage.setItem(`sp_rank_${uid}`,JSON.stringify(rk));
+  toast(`🏆 ${pts} RR sauvegardé`,'success');closeM('mRR');renderRank();renderOverview();}
+
+// ── ROLES MODAL ───────────────────────────────────────────────────────
+function openRoles(uid){const u=allUsers.find(x=>x.uid===uid);if(!u)return;editU=u;
+  document.getElementById('rolesMN').textContent=u.data.name||uid;refreshRL();openM('mRoles');}
+function refreshRL(){const u=editU,c=document.getElementById('activeRC');
+  if(!u.roles.length){c.innerHTML='<div style="font-size:11px;color:var(--muted);padding:4px 0;">Aucun rôle</div>';return;}
+  c.innerHTML=u.roles.map(r=>{const exp=r.expiresAt===-1?'À vie':new Date(r.expiresAt).toLocaleDateString('fr-FR');
+    return `<div class="role-tag">${r.role}<span style="font-size:9px;color:var(--muted);margin-left:2px;">${exp}</span><button onclick="remRole('${r.role}')">✕</button></div>`;}).join('');}
+function addRole(){const role=document.getElementById('newRoleSel').value,dur=parseInt(document.getElementById('roleDurSel').value);
+  if(!role){toast('Choisis un rôle','error');return;}
+  if(editU.roles.some(r=>r.role===role)){toast('Rôle déjà attribué','info');return;}
+  const exp=dur===-1?-1:Date.now()+dur*86400000;
+  editU.roles.push({role,expiresAt:exp,addedAt:Date.now()});saveRoles();
+  toast(`✅ Rôle ${role} attribué`,'success');refreshRL();loadAll();}
+function remRole(role){editU.roles=editU.roles.filter(r=>r.role!==role);saveRoles();toast(`Rôle ${role} retiré`,'info');refreshRL();loadAll();}
+function saveRoles(){const uid=editU.uid,j=JSON.stringify(editU.roles);
+  localStorage.setItem(`scorepilot_roles_${uid}`,j);localStorage.setItem(`sp_roles_${uid}`,j);
+  const prio={ADMIN:3,COLLABORATEUR:2,PRO:1},sorted=[...editU.roles].sort((a,b)=>(prio[b.role]||0)-(prio[a.role]||0));
+  const ns=sorted.length?sorted[0].role:'FREE';editU.data.role=ns.toLowerCase();editU.data.status=ns;editU.status=ns;
+  localStorage.setItem(`scorepilot_user_${uid}`,JSON.stringify(editU.data));}
+
+// ── DELETE ────────────────────────────────────────────────────────────
+function openDel(uid){const u=allUsers.find(x=>x.uid===uid);if(!u)return;delU=u;document.getElementById('delName').textContent=u.data.name||uid;openM('mDel');}
+function confirmDel(){const uid=delU.uid;
+  ['scorepilot_user_','sp_user_','sp_rank_','scorepilot_roles_','sp_roles_','sp_points_','scorepilot_points_','sp_ed_','scorepilot_ed_'].forEach(p=>localStorage.removeItem(p+uid));
+  toast(`🗑️ ${delU.data.name||uid} supprimé`,'info');closeM('mDel');loadAll();}
+
+// ── NOTIFS ────────────────────────────────────────────────────────────
+function sendNotif(){
+  const t=document.getElementById('nTitle').value.trim(),m=document.getElementById('nMsg').value.trim();
+  if(!t||!m){toast('Remplis le titre et le message','error');return;}
+  const type=document.getElementById('nType').value,target=document.getElementById('nTarget').value;
+  const notif={id:Date.now(),icon:selEmo,title:t,msg:m,type,timestamp:Date.now()};
+  const recip=target==='all'?allUsers:target==='pro'?allUsers.filter(u=>['PRO','COLLABORATEUR','ADMIN'].includes(u.status)):
+    target==='free'?allUsers.filter(u=>u.status==='FREE'):allUsers.filter(u=>u.hasED);
+  recip.forEach(u=>{const key=`sp_notifs_${u.uid}`;const ex=JSON.parse(localStorage.getItem(key)||'[]');ex.unshift({...notif,read:false});if(ex.length>50)ex.pop();localStorage.setItem(key,JSON.stringify(ex));});
+  nHist.unshift({...notif,recipients:recip.length});renderNH();
+  toast(`📢 Envoyé à ${recip.length} utilisateur(s)`,'success');
+  document.getElementById('nTitle').value='';document.getElementById('nMsg').value='';}
+function previewNotif(){document.getElementById('pEmo').textContent=selEmo;document.getElementById('pTit').textContent=document.getElementById('nTitle').value||'Titre';document.getElementById('pMsg').textContent=document.getElementById('nMsg').value||'Message...';}
+function renderNH(){const c=document.getElementById('nHist');
+  if(!nHist.length){c.innerHTML='<div style="color:var(--muted);">Aucune notification</div>';return;}
+  c.innerHTML=nHist.slice(0,5).map(n=>`<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:9px;"><span style="font-size:16px;">${n.icon}</span><div style="flex:1;"><div style="font-size:11px;font-weight:600;">${esc(n.title)}</div><div style="font-size:10px;color:var(--muted);">${n.recipients} destinataire(s)</div></div></div>`).join('');}
+
+// ── RESET RR ──────────────────────────────────────────────────────────
+function openRRReset(){openM('mRRReset');}
+function confirmRRReset(){allUsers.forEach(u=>{localStorage.setItem(`sp_points_${u.uid}`,0);localStorage.setItem(`scorepilot_points_${u.uid}`,0);u.points=0;});toast('🔄 Classement réinitialisé','info');closeM('mRRReset');renderRank();renderOverview();}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────
+function exportData(){const data={users:allUsers.map(u=>({uid:u.uid,name:u.data.name,email:u.data.email,status:u.status,points:u.points,hasED:u.hasED})),exported:new Date().toISOString()};
+  const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`scorepilot-export-${Date.now()}.json`;a.click();toast('📥 Export OK','success');}
+function cleanExpired(){let c=0;allUsers.forEach(u=>{const b=u.roles.length;u.roles=u.roles.filter(r=>r.expiresAt===-1||r.expiresAt>Date.now());if(u.roles.length<b){c++;saveRoles();}});toast(`🧹 ${c} compte(s) nettoyé(s)`,'success');}
+function resetAll(){if(!confirm('DERNIÈRE CONFIRMATION'))return;localStorage.clear();toast('⚠️ Reset total effectué','error');setTimeout(()=>location.reload(),1500);}
+
+// ── NAV ───────────────────────────────────────────────────────────────
+function nav(el,pid){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  const map={overview:'Overview',users:'Users',roles:'Roles',rank:'Rank',notifs:'Notifs',settings:'Settings'};
+  document.getElementById('pg'+(map[pid]||pid))?.classList.add('on');
+  if(el)el.classList.add('on');
+  if(pid==='rank')renderRank();
+  if(pid==='roles')renderRoles();
+  if(pid==='users')renderUsers(allUsers);
+}
+
+// ── RANG ──────────────────────────────────────────────────────────────
+const TIERS=[
+  {name:'UNRANKED',sub:[''],color:'#4a4a4a',pts:[[0,0]]},
+  {name:'NOVICE',sub:['I','II','III'],color:'#8e9aaf',pts:[[0,100],[100,200],[200,300]]},
+  {name:'INITIÉ',sub:['I','II','III'],color:'#b87333',pts:[[300,400],[400,500],[500,600]]},
+  {name:'RIVAL',sub:['I','II','III'],color:'#b0b8c8',pts:[[600,700],[700,800],[800,900]]},
+  {name:'CHALLENGER',sub:['I','II','III'],color:'#e8b84b',pts:[[900,1000],[1000,1100],[1100,1200]]},
+  {name:'EXPERT',sub:['I','II','III'],color:'#2dd4b8',pts:[[1200,1300],[1300,1400],[1400,1500]]},
+  {name:'MAÎTRE',sub:['I','II','III'],color:'#9b7fe8',pts:[[1500,1600],[1600,1700],[1700,1800]]},
+  {name:'ÉLITE',sub:['I','II','III'],color:'#3ddc84',pts:[[1800,1900],[1900,2000],[2000,2100]]},
+  {name:'CHAMPION',sub:['I','II','III'],color:'#ff6b6b',pts:[[2100,2200],[2200,2300],[2300,2400]]},
+  {name:'GRAND CHAMPION',sub:[''],color:'#ffe066',pts:[[2400,99999]]},
+];
+const RANKS_FLAT=[];
+TIERS.forEach(t=>t.sub.forEach((s,i)=>RANKS_FLAT.push({name:s?`${t.name} ${s}`:t.name,color:t.color,range:t.pts[i]||[0,100]})));
+function getRank(pts){let found=RANKS_FLAT[1]||RANKS_FLAT[0];for(const r of RANKS_FLAT){if(pts>=r.range[0])found=r;else break;}return found;}
+function rankBadge(pts){const r=getRank(pts);return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:800;letter-spacing:0.5px;background:rgba(0,0,0,0.3);border:1px solid ${r.color}40;color:${r.color};">${r.name}</span>`;}
+
+// ── UTILS ─────────────────────────────────────────────────────────────
+function openM(id){document.getElementById(id).classList.add('show');}
+function closeM(id){document.getElementById(id).classList.remove('show');}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
+
+// Emoji picker
+document.getElementById('emojiPick').addEventListener('click',e=>{const o=e.target.closest('.eopt');if(!o)return;document.querySelectorAll('.eopt').forEach(x=>x.classList.remove('on'));o.classList.add('on');selEmo=o.dataset.e;previewNotif();});
+['nTitle','nMsg'].forEach(id=>document.getElementById(id)?.addEventListener('input',previewNotif));
+
+window.addEventListener('load',()=>{
+  loadAll();
+  // Auth check
+  const cur=JSON.parse(sessionStorage.getItem('currentUser')||'{}');
+  const uid=cur.id||(cur.name||'').replace(/\s+/g,'_').toLowerCase();
+  if(uid&&uid!=='ayman'&&uid!=='admin_ayman'){
+    const rRaw=localStorage.getItem(`sp_roles_${uid}`)||localStorage.getItem(`scorepilot_roles_${uid}`);
+    const roles=rRaw?JSON.parse(rRaw).filter(r=>r.expiresAt===-1||r.expiresAt>Date.now()):[];
+    if(!roles.some(r=>r.role==='ADMIN'))document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:14px;"><div style="font-size:36px;">🔒</div><div style="font-size:16px;font-weight:700;">Accès refusé</div><a href="dashboard.html" style="color:#6366f1;font-size:13px;">← Retour</a></div>';
+  }
+});
+</script>
+</body>
+</html>

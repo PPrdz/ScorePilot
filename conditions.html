@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conditions d'utilisation — ScorePilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#0a0a0a;color:white;min-height:100vh;padding:40px 24px;-webkit-font-smoothing:antialiased;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0;}
+.page{position:relative;z-index:1;max-width:760px;margin:0 auto;}
+.back-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.7);font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;margin-bottom:40px;transition:all 0.2s;}
+.back-btn:hover{background:rgba(255,255,255,0.09);color:white;}
+.logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,#4A90E2,#7B68EE);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+h1{font-size:32px;font-weight:900;margin-bottom:8px;}
+.date{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:48px;}
+.section{margin-bottom:40px;}
+h2{font-size:18px;font-weight:700;margin-bottom:14px;color:white;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);}
+p{font-size:15px;line-height:1.8;color:rgba(255,255,255,0.75);margin-bottom:12px;}
+ul{padding-left:20px;margin-bottom:12px;}
+li{font-size:15px;line-height:1.8;color:rgba(255,255,255,0.75);margin-bottom:4px;}
+strong{color:white;font-weight:600;}
+.highlight{background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:16px 20px;margin:16px 0;}
+.highlight p{margin:0;color:rgba(255,255,255,0.85);}
+a{color:#818cf8;text-decoration:none;}
+a:hover{text-decoration:underline;}
+.footer{margin-top:64px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);font-size:13px;color:rgba(255,255,255,0.3);text-align:center;}
+</style>
+</head>
+<body>
+<div class="page">
+  <a href="login-revolut.html" class="back-btn">← Retour</a>
+
+  <div class="logo">ScorePilot</div>
+  <h1>Conditions d'utilisation</h1>
+  <div class="date">Dernière mise à jour : 20 avril 2026</div>
+
+  <div class="section">
+    <h2>1. Présentation du service</h2>
+    <p><strong>ScorePilot</strong> est une application web à destination des élèves et étudiants, conçue pour les aider à suivre leurs résultats scolaires, organiser leurs révisions et améliorer leurs performances académiques. Le service est accessible à l'adresse définie par l'éditeur.</p>
+    <p>ScorePilot est édité et exploité à titre personnel. L'application n'est pas affiliée à EcoleDirecte, à tout établissement scolaire, ni à aucune institution publique.</p>
+  </div>
+
+  <div class="section">
+    <h2>2. Acceptation des conditions</h2>
+    <p>En créant un compte ou en utilisant ScorePilot, vous acceptez sans réserve les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, vous ne devez pas utiliser le service.</p>
+    <p>Ces conditions peuvent être mises à jour à tout moment. Les utilisateurs sont informés de toute modification significative. La poursuite de l'utilisation du service après modification vaut acceptation des nouvelles conditions.</p>
+  </div>
+
+  <div class="section">
+    <h2>3. Accès et inscription</h2>
+    <p>L'accès à certaines fonctionnalités de ScorePilot nécessite la création d'un compte. Lors de l'inscription, vous vous engagez à :</p>
+    <ul>
+      <li>Fournir des informations exactes et à jour</li>
+      <li>Choisir un mot de passe sécurisé et ne pas le communiquer à des tiers</li>
+      <li>Notifier immédiatement ScorePilot de tout accès non autorisé à votre compte</li>
+    </ul>
+    <p>ScorePilot se réserve le droit de suspendre ou supprimer tout compte en cas de violation des présentes conditions.</p>
+    <p>L'inscription via Google utilise les services OAuth de Google LLC. En choisissant cette option, vous acceptez également les conditions d'utilisation de Google.</p>
+  </div>
+
+  <div class="section">
+    <h2>4. Connexion EcoleDirecte</h2>
+    <div class="highlight">
+      <p>⚠️ <strong>Information importante :</strong> ScorePilot propose une fonctionnalité optionnelle de connexion à EcoleDirecte. Cette connexion est facultative et entièrement à l'initiative de l'utilisateur. ScorePilot n'est pas affilié à EcoleDirecte ni à son éditeur (Aplim).</p>
+    </div>
+    <p>Lorsque vous choisissez de connecter votre compte EcoleDirecte :</p>
+    <ul>
+      <li>Vos identifiants sont transmis de manière chiffrée (HTTPS) à l'API officielle d'EcoleDirecte pour obtenir un token de session temporaire</li>
+      <li><strong>Votre mot de passe EcoleDirecte n'est jamais stocké</strong> par ScorePilot, ni en local, ni sur un serveur</li>
+      <li>Seul le token de session temporaire fourni par EcoleDirecte est conservé localement dans votre navigateur (localStorage)</li>
+      <li>Cette connexion est sous votre entière responsabilité</li>
+    </ul>
+    <p>ScorePilot ne peut être tenu responsable de tout dysfonctionnement lié à un changement de l'API EcoleDirecte, ni de toute conséquence liée à l'utilisation de cette fonctionnalité.</p>
+  </div>
+
+  <div class="section">
+    <h2>5. Utilisation acceptable</h2>
+    <p>Vous vous engagez à utiliser ScorePilot uniquement à des fins légales et dans le respect des présentes conditions. Il est notamment interdit de :</p>
+    <ul>
+      <li>Utiliser le service pour nuire à d'autres utilisateurs</li>
+      <li>Tenter de contourner les mécanismes de sécurité de l'application</li>
+      <li>Reproduire, copier ou revendre tout ou partie du service sans autorisation</li>
+      <li>Utiliser des robots, scripts ou outils automatisés pour accéder au service</li>
+      <li>Usurper l'identité d'un autre utilisateur ou d'un administrateur</li>
+      <li>Publier des contenus illicites, diffamatoires, offensants ou portant atteinte aux droits de tiers</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>6. Propriété intellectuelle</h2>
+    <p>L'ensemble des éléments constitutifs de ScorePilot (design, code, contenus, logo, nom, identité visuelle) est protégé par le droit de la propriété intellectuelle et demeure la propriété exclusive de l'éditeur.</p>
+    <p>Toute reproduction, distribution, modification ou exploitation, partielle ou totale, du service ou de ses éléments sans autorisation préalable écrite est strictement interdite.</p>
+  </div>
+
+  <div class="section">
+    <h2>7. Données personnelles</h2>
+    <p>Le traitement de vos données personnelles est décrit en détail dans notre <a href="confidentialite.html">Politique de confidentialité</a>, qui fait partie intégrante des présentes conditions.</p>
+  </div>
+
+  <div class="section">
+    <h2>8. Limitation de responsabilité</h2>
+    <p>ScorePilot est fourni <strong>"en l'état"</strong>, sans garantie d'aucune sorte, expresse ou implicite. L'éditeur ne garantit pas que le service sera disponible en permanence, exempt d'erreurs ou adapté à un usage particulier.</p>
+    <p>Dans toute la mesure permise par la loi applicable, l'éditeur décline toute responsabilité pour :</p>
+    <ul>
+      <li>Toute perte de données résultant d'une interruption de service</li>
+      <li>Toute inexactitude dans les données scolaires affichées</li>
+      <li>Tout dommage indirect lié à l'utilisation du service</li>
+      <li>Tout problème résultant de la connexion à des services tiers (EcoleDirecte, Google, etc.)</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>9. Mineurs</h2>
+    <p>ScorePilot est destiné à un public scolaire. Les utilisateurs de moins de 15 ans doivent disposer du consentement de leurs parents ou représentants légaux pour créer un compte et utiliser le service.</p>
+    <p>En créant un compte, l'utilisateur déclare avoir l'âge requis ou disposer de l'autorisation parentale nécessaire.</p>
+  </div>
+
+  <div class="section">
+    <h2>10. Suspension et résiliation</h2>
+    <p>ScorePilot se réserve le droit de suspendre ou de résilier l'accès au service pour tout utilisateur qui violerait les présentes conditions, sans préavis ni indemnité.</p>
+    <p>L'utilisateur peut supprimer son compte à tout moment depuis les Paramètres de l'application. La suppression entraîne l'effacement de toutes ses données locales.</p>
+  </div>
+
+  <div class="section">
+    <h2>11. Droit applicable et juridiction</h2>
+    <p>Les présentes conditions sont régies par le droit français. Tout litige relatif à leur interprétation ou leur exécution sera soumis aux tribunaux compétents du ressort de la juridiction de l'éditeur.</p>
+    <p>En cas de litige, une solution amiable sera recherchée en priorité. L'utilisateur peut également recourir à la médiation conformément à la réglementation européenne en vigueur.</p>
+  </div>
+
+  <div class="section">
+    <h2>12. Contact</h2>
+    <p>Pour toute question relative aux présentes conditions, vous pouvez nous contacter via l'application ScorePilot ou par tout moyen de communication mis à disposition par l'éditeur.</p>
+  </div>
+
+  <div class="footer">
+    © 2026 ScorePilot — Tous droits réservés<br>
+    <a href="confidentialite.html">Politique de confidentialité</a>
+  </div>
+</div>
+</body>
+</html>

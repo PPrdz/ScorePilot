@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paramètres - ScorePilot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: white; min-height: 100vh; padding: 32px; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 24px 24px; pointer-events: none; z-index: 0; }
+    .container { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+    
+    .header { display: flex; align-items: center; gap: 24px; margin-bottom: 48px; }
+    .back-btn { width: 48px; height: 48px; background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; transition: all 0.3s; }
+    .back-btn:hover { background: rgba(255,255,255,0.08); transform: scale(1.05); }
+    .title { font-size: 36px; font-weight: 900; }
+    
+    .profile-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 32px; margin-bottom: 24px; text-align: center; }
+    .profile-avatar-wrapper { position: relative; width: 120px; height: 120px; margin: 0 auto 20px; }
+    .profile-avatar { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #818cf8); display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; object-fit: cover; border: 4px solid rgba(99, 102, 241, 0.3); }
+    .avatar-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.3s; cursor: pointer; }
+    .profile-avatar-wrapper:hover .avatar-overlay { opacity: 1; }
+    .avatar-icon { font-size: 32px; }
+    .profile-name { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .profile-status { display: inline-block; padding: 8px 20px; background: rgba(99, 102, 241, 0.2); border-radius: 100px; font-size: 14px; font-weight: 700; color: #818cf8; }
+    #avatarInput { display: none; }
+    
+    .section { background: rgba(255,255,255,0.03); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 32px; margin-bottom: 24px; }
+    .section-title { font-size: 20px; font-weight: 700; margin-bottom: 24px; }
+    
+    .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .setting-item:last-child { border-bottom: none; }
+    .setting-info { flex: 1; }
+    .setting-label { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .setting-desc { font-size: 13px; color: rgba(255,255,255,0.5); }
+    
+    .toggle { width: 52px; height: 28px; background: rgba(255,255,255,0.1); border-radius: 100px; position: relative; cursor: pointer; transition: all 0.3s; }
+    .toggle.active { background: linear-gradient(135deg, #6366f1, #818cf8); }
+    .toggle-thumb { width: 24px; height: 24px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.3s; }
+    .toggle.active .toggle-thumb { left: 26px; }
+    
+    .btn { padding: 14px 28px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'Inter'; transition: all 0.2s; }
+    .btn:hover { background: rgba(255,255,255,0.08); }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #ef4444; }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+    
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);backdrop-filter:blur(10px);z-index:1000;display:none;align-items:center;justify-content:center;}
+    .modal.show{display:flex;}
+    .modal-content{background:rgba(255,255,255,0.05);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:40px;max-width:500px;width:100%;}
+    .modal-title{font-size:24px;font-weight:800;margin-bottom:8px;}
+    .modal-subtitle{font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:32px;}
+    .modal-input{width:100%;padding:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:15px;margin-bottom:16px;}
+    .modal-btn{width:100%;padding:16px;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;}
+    .modal-btn-primary{background:linear-gradient(135deg, #6366f1, #818cf8);color:white;}
+    .modal-btn-secondary{background:rgba(255,255,255,0.05);color:white;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="back-btn" onclick="window.location.href='dashboard.html'">←</div>
+      <h1 class="title">⚙️ Paramètres</h1>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-avatar-wrapper">
+        <img id="profileAvatar" class="profile-avatar" />
+        <div class="avatar-overlay" onclick="document.getElementById('avatarInput').click()">
+          <div class="avatar-icon">📷</div>
+        </div>
+        <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(event)">
+      </div>
+      <div class="profile-name" id="profileName">Utilisateur</div>
+      <div class="profile-status" id="profileStatus">FREE</div>
+      <div style="margin-top:16px;font-size:13px;color:rgba(255,255,255,0.5);">Clique sur l'avatar pour changer ta photo</div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">🔔 Notifications</h2>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">Alertes de notes</div>
+          <div class="setting-desc">Recevoir une notification lors d'une nouvelle note</div>
+        </div>
+        <div class="toggle active" onclick="toggleSetting(this)">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">Rappels de révision</div>
+          <div class="setting-desc">Rappels quotidiens pour tes sessions</div>
+        </div>
+        <div class="toggle active" onclick="toggleSetting(this)">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">Alertes de moyenne</div>
+          <div class="setting-desc">Notifications si ta moyenne change</div>
+        </div>
+        <div class="toggle" onclick="toggleSetting(this)">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">🎯 Objectifs</h2>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">Objectif de moyenne</div>
+          <div class="setting-desc">Ta moyenne cible</div>
+        </div>
+        <button class="btn" onclick="setGoal()">16.0</button>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">Sessions par semaine</div>
+          <div class="setting-desc">Nombre de sessions de révision</div>
+        </div>
+        <button class="btn" onclick="setSessions()">3 sessions</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">🔗 Comptes liés</h2>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">EcoleDirecte</div>
+          <div class="setting-desc" id="edStatus">Non connecté</div>
+        </div>
+        <button class="btn" onclick="connectED()">Connecter</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">💎 Abonnement</h2>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">Plan actuel</div>
+          <div class="setting-desc">Voir les détails de ton abonnement</div>
+        </div>
+        <button class="btn" onclick="window.location.href='https://voluble-frangollo-cdec53.netlify.app/#offre'">Gérer</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">⚠️ Zone dangereuse</h2>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">Réinitialiser les données</div>
+          <div class="setting-desc">Effacer toutes tes données ScorePilot</div>
+        </div>
+        <button class="btn btn-danger" onclick="resetData()">Réinitialiser</button>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-label">Supprimer le compte</div>
+          <div class="setting-desc">Supprimer définitivement ton compte</div>
+        </div>
+        <button class="btn btn-danger" onclick="deleteAccount()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="edModal">
+    <div class="modal-content">
+      <div class="modal-title">🔗 Connecter EcoleDirecte</div>
+      <div class="modal-subtitle">Synchronise tes notes automatiquement</div>
+      <input type="text" class="modal-input" id="edUsername" placeholder="Identifiant EcoleDirecte">
+      <input type="password" class="modal-input" id="edPassword" placeholder="Mot de passe EcoleDirecte">
+      <div style="padding:12px;background:rgba(99,102,241,0.1);border-radius:12px;margin-bottom:20px;font-size:13px;color:rgba(255,255,255,0.7);">
+        ℹ️ Tes identifiants sont stockés localement et sécurisés
+      </div>
+      <button class="modal-btn modal-btn-primary" onclick="saveED()">Connecter</button>
+      <button class="modal-btn modal-btn-secondary" onclick="closeEDModal()">Annuler</button>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{"name":"Utilisateur","status":"FREE"}');
+    
+    window.addEventListener('load', () => {
+      const userId = currentUser.name.replace(/\s+/g, '_').toLowerCase();
+      
+      document.getElementById('profileName').textContent = currentUser.name;
+      
+      // Récupérer le vrai statut depuis les rôles
+      let displayStatus = currentUser.status || currentUser.role?.toUpperCase() || currentUser.plan?.toUpperCase() || 'FREE';
+      
+      // Vérifier les rôles actifs
+      const rolesData = localStorage.getItem(`scorepilot_roles_${userId}`) || 
+                       localStorage.getItem(`sp_roles_${userId}`);
+      if (rolesData) {
+        try {
+          const roles = JSON.parse(rolesData);
+          const activeRoles = roles.filter(r => r.expiresAt === -1 || r.expiresAt > Date.now());
+          if (activeRoles.length > 0) {
+            const priority = { ADMIN: 3, COLLABORATEUR: 2, PRO: 1 };
+            activeRoles.sort((a, b) => (priority[b.role] || 0) - (priority[a.role] || 0));
+            displayStatus = activeRoles[0].role;
+          }
+        } catch (e) {
+          console.error('Error parsing roles:', e);
+        }
+      }
+      
+      // Récupérer le rang depuis sp_rank_${userId}
+      const rankData = localStorage.getItem(`sp_rank_${userId}`);
+      if (rankData) {
+        try {
+          const rank = JSON.parse(rankData);
+          if (rank.rank) {
+            displayStatus = `${displayStatus} • ${rank.rank}`;
+          }
+        } catch (e) {
+          console.error('Error parsing rank:', e);
+        }
+      }
+      
+      document.getElementById('profileStatus').textContent = displayStatus;
+      
+      const avatar = document.getElementById('profileAvatar');
+      const savedPhoto = localStorage.getItem(`sp_photo_${userId}`) 
+        || localStorage.getItem(`scorepilot_photo_${userId}`);
+      
+      if (savedPhoto) {
+        avatar.src = savedPhoto;
+      } else {
+        avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+        avatar.style.backgroundImage = 'linear-gradient(135deg, #6366f1, #818cf8)';
+      }
+      
+      const edData = localStorage.getItem(`scorepilot_ed_${userId}`);
+      if (edData) {
+        document.getElementById('edStatus').textContent = 'Connecté ✓';
+      }
+    });
+    
+    function uploadAvatar(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      if (!file.type.startsWith('image/')) {
+        showToast('❌ Fichier invalide. Choisis une image !', 'error');
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('❌ Image trop lourde (max 5MB)', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const avatar = document.getElementById('profileAvatar');
+        avatar.src = e.target.result;
+        avatar.style.backgroundImage = 'none';
+        
+        const userId = currentUser.name.replace(/\s+/g, '_').toLowerCase();
+        // Sauvegarder dans les DEUX formats pour compatibilité
+        localStorage.setItem(`sp_photo_${userId}`, e.target.result);
+        localStorage.setItem(`scorepilot_photo_${userId}`, e.target.result);
+        
+        // Confetti effect
+        showToast('✅ Photo de profil mise à jour !');
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function toggleSetting(toggle) {
+      toggle.classList.toggle('active');
+    }
+    
+    function setGoal() {
+      const btn = event.target;
+      showInputModal('🎯 Objectif de moyenne', 'Ex: 16.5', btn.textContent, (val) => {
+        if (val && !isNaN(parseFloat(val))) {
+          const userId = currentUser.name.replace(/\s+/g, '_').toLowerCase();
+          localStorage.setItem(`sp_goal_${userId}`, val);
+          btn.textContent = val;
+          showToast('✅ Objectif mis à jour');
+        } else {
+          showToast('❌ Valeur invalide', 'error');
+        }
+      });
+    }
+    
+    function setSessions() {
+      const btn = event.target;
+      const cur = btn.textContent.replace(/[^0-9]/g,'');
+      showInputModal('📅 Sessions par semaine', '1 à 7 sessions', cur, (val) => {
+        const n = parseInt(val);
+        if (n >= 1 && n <= 7) {
+          const userId = currentUser.name.replace(/\s+/g, '_').toLowerCase();
+          localStorage.setItem(`sp_sessions_${userId}`, n);
+          btn.textContent = `${n} session${n > 1 ? 's' : ''}`;
+          showToast('✅ Objectif mis à jour');
+        } else {
+          showToast('❌ Valeur entre 1 et 7', 'error');
+        }
+      });
+    }
+    
+    function connectED() {
+      // Rediriger vers la page de connexion ED complète
+      window.location.href = 'ed-connect-beautiful.html';
+    }
+    
+    function closeEDModal() {
+      document.getElementById('edModal').classList.remove('show');
+    }
+    
+    async function saveED() {
+      const username = document.getElementById('edUsername').value.trim();
+      const password = document.getElementById('edPassword').value;
+      
+      if (!username || !password) {
+        showToast('❌ Remplis tous les champs', 'error');
+        return;
+      }
+      
+      // Afficher loading
+      document.getElementById('edStatus').textContent = 'Connexion...';
+      closeEDModal();
+      
+      try {
+        // Générer UUID pour la requête
+        const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+        
+        // Nettoyer les inputs
+        const cleanUsername = username.trim();
+        const cleanPassword = password; // Ne PAS trim le password (espaces peuvent être volontaires)
+        
+        // Préparer le payload
+        const payload = {
+          identifiant: cleanUsername,
+          motdepasse: cleanPassword,
+          uuid: uuid,
+          isReLogin: false
+        };
+        
+        console.log('🔍 DEBUG - Username utilisé:', cleanUsername);
+        console.log('🔍 DEBUG - Password length:', cleanPassword.length);
+        console.log('🔍 DEBUG - UUID généré:', uuid);
+        console.log('🔍 DEBUG - Payload complet:', payload);
+        
+        // Utiliser URLSearchParams pour un encodage propre
+        const params = new URLSearchParams();
+        params.append('data', JSON.stringify(payload));
+        const body = params.toString();
+        
+        console.log('📤 Body final:', body);
+        console.log('📤 Body décodé (preview):', decodeURIComponent(body).substring(0, 150));
+        
+        // Appel DIRECT à l'API EcoleDirecte
+        const loginResp = await fetch('https://api.ecoledirecte.com/v3/login.awp', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: body
+        });
+        
+        const loginData = await loginResp.json();
+        
+        console.log('📥 Response ED complète:', loginData);
+        
+        // Vérification du code de réponse
+        if (loginData.code !== 200) {
+          console.error('❌ Erreur ED - Code:', loginData.code);
+          console.error('❌ Message:', loginData.message);
+          
+          // Messages d'erreur plus explicites
+          let errorMsg = loginData.message || 'Erreur de connexion';
+          
+          if (loginData.code === 505) {
+            errorMsg = '❌ Identifiant ou mot de passe incorrect\n\n';
+            errorMsg += '💡 ATTENTION:\n';
+            errorMsg += '• L\'identifiant ED n\'est PAS un email\n';
+            errorMsg += '• C\'est un code donné par ton lycée\n';
+            errorMsg += '• Exemple: ELEVE1234, A123456, etc.\n\n';
+            errorMsg += '➡️ Vérifie sur www.ecoledirecte.com';
+          } else if (loginData.code === 520) {
+            errorMsg = '⚠️ Ton compte EcoleDirecte est désactivé\nContacte ton établissement';
+          }
+          
+          throw new Error(errorMsg);
+        }
+        
+        // Vérifier qu'on a bien des comptes
+        if (!loginData.data || !loginData.data.accounts || loginData.data.accounts.length === 0) {
+          console.error('❌ Aucun compte trouvé dans la réponse');
+          throw new Error('Aucun compte associé à ces identifiants\n\nVérifie ton identifiant sur www.ecoledirecte.com');
+        }
+        
+        const userId = currentUser.name.replace(/\s+/g, '_').toLowerCase();
+        const token = loginData.token;
+        const accountData = loginData.data.accounts[0];
+        
+        // Sauvegarder credentials + token ED
+        localStorage.setItem(`scorepilot_ed_${userId}`, JSON.stringify({
+          username,
+          token: token,
+          userId: accountData.id,
+          nom: accountData.nom,
+          prenom: accountData.prenom,
+          typeCompte: accountData.typeCompte,
+          connectedAt: Date.now()
+        }));
+        
+        // Sauvegarder aussi avec le nouveau format
+        localStorage.setItem(`sp_ed_${userId}`, JSON.stringify({
+          username,
+          token: token,
+          userId: accountData.id,
+          nom: accountData.nom,
+          prenom: accountData.prenom,
+          typeCompte: accountData.typeCompte,
+          connectedAt: Date.now()
+        }));
+        
+        // Récupérer notes
+        try {
+          const notesFormData = new URLSearchParams();
+          notesFormData.append('data', JSON.stringify({ token: token }));
+          
+          const notesResp = await fetch(`https://api.ecoledirecte.com/v3/eleves/${accountData.id}/notes.awp?verbe=get&`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-Token': token
+            },
+            body: notesFormData.toString()
+          });
+          
+          const notesData = await notesResp.json();
+          
+          if (notesData.code === 200 && notesData.data) {
+            // Sauvegarder notes réelles
+            localStorage.setItem(`scorepilot_notes_${userId}`, JSON.stringify(notesData.data));
+            localStorage.setItem(`sp_notes_${userId}`, JSON.stringify(notesData.data));
+          }
+        } catch(e) {
+          console.log('Notes non récupérées:', e);
+        }
+        
+        document.getElementById('edStatus').textContent = `Connecté (${username})`;
+        const btn = document.querySelector('.setting-item button');
+        if(btn) {
+          btn.textContent = 'Déconnecter';
+          btn.onclick = disconnectED;
+        }
+        
+        showToast('✅ EcoleDirecte connecté ! Tes blocs sont débloqués.');
+        
+        // Recharger pour débloquer blocs
+        setTimeout(() => location.reload(), 1000);
+        
+      } catch (error) {
+        console.error('Erreur ED:', error);
+        document.getElementById('edStatus').textContent = 'Non connecté';
+        
+        let errorMsg = '❌ Erreur connexion EcoleDirecte\n\n';
+        
+        if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+          errorMsg += '⚠️ Problème CORS détecté\n\n';
+          errorMsg += 'L\'API EcoleDirecte bloque les requêtes depuis le navigateur.\n\n';
+          errorMsg += 'Solutions:\n';
+          errorMsg += '1. Utilise une extension CORS (ex: CORS Unblock)\n';
+          errorMsg += '2. Ou ouvre depuis un serveur local (pas en file://)\n';
+          errorMsg += '3. Ou contacte le support\n\n';
+        } else {
+          errorMsg += 'Vérif que tes identifiants sont corrects.\n\n';
+        }
+        
+        errorMsg += 'Erreur: ' + error.message;
+        
+        showToast('❌ Connexion échouée. Vérifie tes identifiants.', 'error');
+        console.error('Erreur détail:', errorMsg);
+      }
+    }
+    
+    function disconnectED() {
+      showConfirmModal(
+        '🔌 Déconnecter EcoleDirecte ?',
+        'Tes blocs ED seront à nouveau verrouillés.',
+        'Déconnecter',
+        'rgba(239,68,68,0.15)',
+        'rgba(239,68,68,0.3)',
+        '#ef4444',
+        () => {
+          const userId = currentUser.name.replace(/\s+/g, '_').toLowerCase();
+          localStorage.removeItem(`scorepilot_ed_${userId}`);
+          localStorage.removeItem(`sp_ed_${userId}`);
+          document.getElementById('edStatus').textContent = 'Non connecté';
+          document.querySelector('.setting-item button').textContent = 'Connecter';
+          document.querySelector('.setting-item button').onclick = connectED;
+          showToast('✅ EcoleDirecte déconnecté');
+        }
+      );
+    }
+    
+    function loadEDStatus() {
+      const userId = currentUser.name.replace(/\s+/g, '_').toLowerCase();
+      const edData = localStorage.getItem(`scorepilot_ed_${userId}`);
+      
+      if (edData) {
+        try {
+          const data = JSON.parse(edData);
+          document.getElementById('edStatus').textContent = `Connecté (${data.username})`;
+          const btn = document.querySelector('.setting-item button');
+          if(btn) {
+            btn.textContent = 'Déconnecter';
+            btn.onclick = disconnectED;
+          }
+        } catch(e) {
+          document.getElementById('edStatus').textContent = 'Non connecté';
+        }
+      } else {
+        document.getElementById('edStatus').textContent = 'Non connecté';
+      }
+    }
+    
+    window.addEventListener('load', () => {
+      loadEDStatus();
+    });
+    
+    function resetData() {
+      showConfirmModal(
+        '⚠️ Réinitialiser les données ?',
+        'Tes notes, tâches et paramètres seront effacés. Irréversible.',
+        'Réinitialiser',
+        'rgba(245,158,11,0.15)',
+        'rgba(245,158,11,0.3)',
+        '#f59e0b',
+        () => {
+          const userId = currentUser.name.replace(/\s+/g, '_').toLowerCase();
+          const keys = [
+            `scorepilot_points_${userId}`, `sp_points_${userId}`,
+            `scorepilot_dashboard_${userId}`, `sp_dashboard_${userId}`,
+            `scorepilot_trackers_${userId}`, `sp_habits_${userId}`,
+            `scorepilot_tasks_${userId}`, `sp_tasks_${userId}`,
+            `scorepilot_alerts_${userId}`,
+            `scorepilot_ed_${userId}`, `sp_ed_${userId}`,
+            `sp_rank_${userId}`, `scorepilot_previsions_scanned_${userId}`
+          ];
+          keys.forEach(key => localStorage.removeItem(key));
+          showToast('✅ Données réinitialisées');
+          setTimeout(() => location.reload(), 1200);
+        }
+      );
+    }
+    
+    function deleteAccount() {
+      showConfirmModal(
+        '🗑️ Supprimer le compte ?',
+        'ATTENTION — Toutes tes données seront définitivement effacées. Cette action est irréversible.',
+        'Supprimer définitivement',
+        'rgba(239,68,68,0.15)',
+        'rgba(239,68,68,0.4)',
+        '#ef4444',
+        () => {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = 'login-revolut.html';
+        }
+      );
+    }
+
+    // ─── HELPERS UI ───────────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+      let t = document.getElementById('_settingsToast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = '_settingsToast';
+        t.style.cssText = 'position:fixed;bottom:28px;right:28px;border-radius:14px;padding:14px 22px;font-size:14px;font-weight:600;z-index:2000;transform:translateY(20px);opacity:0;transition:all 0.3s;box-shadow:0 8px 32px rgba(0,0,0,0.5);color:white;';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.background = type === 'error' ? '#1a0a0a' : '#0a1a0a';
+      t.style.border = type === 'error' ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(16,185,129,0.4)';
+      t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; }, 2800);
+    }
+
+    function showConfirmModal(title, subtitle, actionLabel, bgColor, borderColor, textColor, onConfirm) {
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+      ov.innerHTML = `<div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:32px;max-width:380px;width:100%;text-align:center;animation:_ci 0.25s ease;"><style>@keyframes _ci{from{opacity:0;transform:scale(0.93)}to{opacity:1}}</style>
+        <div style="font-size:22px;font-weight:800;margin-bottom:8px;">${title}</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:26px;line-height:1.5;">${subtitle}</div>
+        <div style="display:flex;gap:10px;">
+          <button id="_cno" style="flex:1;padding:13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Annuler</button>
+          <button id="_cyes" style="flex:1;padding:13px;background:${bgColor};border:1px solid ${borderColor};border-radius:12px;color:${textColor};font-size:14px;font-weight:700;cursor:pointer;">${actionLabel}</button>
+        </div>
+      </div>`;
+      ov.onclick = e => { if (e.target === ov) ov.remove(); };
+      document.body.appendChild(ov);
+      document.getElementById('_cno').onclick = () => ov.remove();
+      document.getElementById('_cyes').onclick = () => { ov.remove(); onConfirm(); };
+    }
+
+    function showInputModal(title, placeholder, currentVal, onSave) {
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+      ov.innerHTML = `<div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:32px;max-width:380px;width:100%;animation:_ci 0.25s ease;">
+        <div style="font-size:20px;font-weight:800;margin-bottom:20px;">${title}</div>
+        <input id="_iminput" value="${currentVal}" placeholder="${placeholder}" style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:white;font-size:15px;outline:none;margin-bottom:20px;" />
+        <div style="display:flex;gap:10px;">
+          <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Annuler</button>
+          <button id="_imsave" style="flex:1;padding:13px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;">Sauvegarder</button>
+        </div>
+      </div>`;
+      ov.onclick = e => { if (e.target === ov) ov.remove(); };
+      document.body.appendChild(ov);
+      const inp = document.getElementById('_iminput');
+      inp.focus(); inp.select();
+      inp.onkeydown = e => { if (e.key === 'Enter') { ov.remove(); onSave(inp.value.trim()); } };
+      document.getElementById('_imsave').onclick = () => { ov.remove(); onSave(inp.value.trim()); };
+    }
+  </script>
+</body>
+</html>

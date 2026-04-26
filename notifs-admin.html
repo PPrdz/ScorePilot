@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications Admin - ScorePilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:#0a0a0a;color:white;min-height:100vh;padding:40px;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;z-index:0;}
+.container{position:relative;z-index:1;max-width:960px;margin:0 auto;}
+.header{margin-bottom:40px;}
+.back{padding:11px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:white;cursor:pointer;font-size:14px;font-weight:600;margin-bottom:24px;transition:all 0.2s;}
+.back:hover{background:rgba(255,255,255,0.09);}
+.title{font-size:30px;font-weight:900;margin-bottom:4px;}
+.subtitle{font-size:14px;color:rgba(255,255,255,0.4);}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.panel{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:28px;}
+.panel-title{font-size:15px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+
+.label{font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;}
+.input,.textarea,.select{width:100%;padding:12px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:white;font-size:14px;margin-bottom:16px;outline:none;transition:border-color 0.2s;}
+.input:focus,.textarea:focus,.select:focus{border-color:rgba(99,102,241,0.5);}
+.textarea{min-height:90px;resize:vertical;font-family:'Inter',sans-serif;}
+.select option{background:#111;}
+
+/* ICON PICKER - Fix: utiliser des boutons avec data-icon en texte */
+.icon-picker{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.icon-opt{width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,0.05);border:2px solid transparent;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;user-select:none;line-height:1;}
+.icon-opt:hover{background:rgba(255,255,255,0.1);}
+.icon-opt.active{border-color:#6366f1;background:rgba(99,102,241,0.18);}
+
+.color-picker{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.color-opt{width:38px;height:38px;border-radius:10px;cursor:pointer;border:3px solid transparent;transition:all 0.2s;}
+.color-opt.active{border-color:white;transform:scale(1.1);}
+
+.send-btn{width:100%;padding:15px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:14px;color:white;font-weight:800;font-size:15px;cursor:pointer;transition:all 0.2s;}
+.send-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,0.4);}
+.send-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* CUSTOM USER */
+.user-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;max-height:120px;overflow-y:auto;}
+.user-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;}
+.user-chip:hover,.user-chip.selected{background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;}
+.user-chip-status{font-size:10px;opacity:0.55;}
+
+/* PREVIEW */
+.preview-card{background:rgba(0,0,0,0.3);border-radius:14px;padding:18px;}
+.preview-notif{padding:14px 16px;border-radius:12px;border-left:4px solid;background:rgba(255,255,255,0.03);}
+.preview-notif-header{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.preview-icon{font-size:20px;line-height:1;flex-shrink:0;}
+.preview-title-text{font-size:14px;font-weight:700;}
+.preview-desc-text{font-size:12px;color:rgba(255,255,255,0.55);line-height:1.5;}
+.preview-time-text{font-size:11px;color:rgba(255,255,255,0.3);margin-top:6px;}
+
+/* HISTORY */
+.history-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.h-icon{font-size:20px;flex-shrink:0;line-height:1;}
+.h-info{flex:1;min-width:0;}
+.h-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.h-meta{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;}
+.h-del{padding:5px 9px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:7px;color:#ef4444;font-size:12px;cursor:pointer;flex-shrink:0;}
+.h-del:hover{background:rgba(239,68,68,0.2);}
+
+.toast{position:fixed;bottom:28px;right:28px;border-radius:14px;padding:13px 20px;font-size:13px;font-weight:600;z-index:2000;transform:translateY(20px);opacity:0;transition:all 0.3s;box-shadow:0 8px 32px rgba(0,0,0,0.5);color:white;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <button class="back" onclick="window.location.href='admin-panel.html'">← Retour Admin</button>
+    <div class="title">📢 Envoyer une notification</div>
+    <div class="subtitle">Diffusez des messages en temps réel à vos utilisateurs</div>
+  </div>
+
+  <div class="grid">
+    <!-- PANNEAU GAUCHE : COMPOSITION -->
+    <div class="panel">
+      <div class="panel-title">✉️ Composer</div>
+
+      <div class="label">Destinataires</div>
+      <select class="select" id="target" onchange="onTargetChange()">
+        <option value="all">🌍 Tous les utilisateurs</option>
+        <option value="FREE">🆓 FREE seulement</option>
+        <option value="PRO">👑 PRO seulement</option>
+        <option value="COLLABORATEUR">💜 COLLABORATEUR seulement</option>
+        <option value="ADMIN">👨‍💼 ADMIN seulement</option>
+        <option value="custom">✏️ Utilisateur spécifique</option>
+      </select>
+
+      <div id="customBlock" style="display:none;">
+        <div class="label">Sélectionner l'utilisateur</div>
+        <div class="user-chips" id="userChips">Chargement...</div>
+        <input type="text" class="input" id="customUser" placeholder="ou entre un userId manuellement" style="margin-top:0;">
+      </div>
+
+      <div class="label">Icône</div>
+      <!-- Fix icône : stocker l'emoji directement en attribut data-icon ET en textContent -->
+      <div class="icon-picker" id="iconPicker"></div>
+
+      <div class="label">Titre</div>
+      <input type="text" class="input" id="notifTitle" placeholder="Ex: 🎉 Nouvelle fonctionnalité !" oninput="updatePreview()">
+
+      <div class="label">Message</div>
+      <textarea class="textarea" id="notifMessage" placeholder="Décris la notification..." oninput="updatePreview()"></textarea>
+
+      <div class="label">Couleur de bordure</div>
+      <div class="color-picker" id="colorPicker"></div>
+
+      <button class="send-btn" id="sendBtn" onclick="sendNotif()">🚀 Envoyer la notification</button>
+    </div>
+
+    <!-- PANNEAU DROIT -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div class="panel">
+        <div class="panel-title">👁️ Aperçu</div>
+        <div class="preview-card">
+          <div class="preview-notif" id="previewNotif" style="border-left-color:#6366f1;">
+            <div class="preview-notif-header">
+              <span class="preview-icon" id="previewIcon">📢</span>
+              <span class="preview-title-text" id="previewTitle">Titre de la notification</span>
+            </div>
+            <div class="preview-desc-text" id="previewDesc">Message de la notification...</div>
+            <div class="preview-time-text">Maintenant</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:rgba(255,255,255,0.4);">
+          Destinataires : <strong id="recipientCount" style="color:white;">—</strong>
+        </div>
+      </div>
+
+      <div class="panel" style="flex:1;">
+        <div class="panel-title">🕐 Envois récents</div>
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const HISTORY_KEY = 'sp_admin_notif_history';
+
+// ─── ICONS & COLORS ──────────────────────────────────────────────────────────
+// Fix majeur : on stocke les emojis en JS pur, pas en HTML (évite les problèmes d'encodage)
+const ICONS = ['📢','🎉','⚠️','✅','🔥','🏆','💡','🚀','❤️','🎯','📚','⭐','🆕','🔔','💬'];
+const COLORS = [
+  { hex:'#6366f1', label:'Violet' },
+  { hex:'#10b981', label:'Vert' },
+  { hex:'#ef4444', label:'Rouge' },
+  { hex:'#f59e0b', label:'Orange' },
+  { hex:'#8b5cf6', label:'Mauve' },
+  { hex:'#ec4899', label:'Rose' },
+  { hex:'#0066FF', label:'Bleu' },
+];
+
+let selectedIcon = '📢';
+let selectedColor = '#6366f1';
+let selectedUserId = '';
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  renderIconPicker();
+  renderColorPicker();
+  loadHistory();
+  countRecipients();
+});
+
+function renderIconPicker() {
+  // Créer chaque bouton en JS pour garantir l'encodage correct de l'emoji
+  const picker = document.getElementById('iconPicker');
+  picker.innerHTML = '';
+  ICONS.forEach(icon => {
+    const btn = document.createElement('div');
+    btn.className = 'icon-opt' + (icon === selectedIcon ? ' active' : '');
+    btn.textContent = icon;       // textContent = pas de risque d'encodage HTML
+    btn.title = icon;
+    btn.onclick = () => selectIcon(icon, btn);
+    picker.appendChild(btn);
+  });
+}
+
+function renderColorPicker() {
+  const picker = document.getElementById('colorPicker');
+  picker.innerHTML = '';
+  COLORS.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'color-opt' + (c.hex === selectedColor ? ' active' : '');
+    div.style.background = c.hex;
+    div.title = c.label;
+    div.onclick = () => selectColor(c.hex, div);
+    picker.appendChild(div);
+  });
+}
+
+function selectIcon(icon, el) {
+  selectedIcon = icon;
+  document.querySelectorAll('.icon-opt').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  // Mettre à jour l'aperçu — textContent pour l'emoji
+  document.getElementById('previewIcon').textContent = icon;
+}
+
+function selectColor(hex, el) {
+  selectedColor = hex;
+  document.querySelectorAll('.color-opt').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('previewNotif').style.borderLeftColor = hex;
+}
+
+// ─── USERS ────────────────────────────────────────────────────────────────────
+function getAllUsers() {
+  const users = [];
+  const seen = new Set();
+
+  // Nouveau format scorepilot_user_*
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key.startsWith('scorepilot_user_')) continue;
+    try {
+      const u = JSON.parse(localStorage.getItem(key));
+      const uid = key.replace('scorepilot_user_', '');
+      if (!seen.has(uid)) {
+        seen.add(uid);
+        users.push({ uid, name: u.name || uid, status: (u.status || u.plan || 'FREE').toUpperCase(), raw: u });
+      }
+    } catch(e) {}
+  }
+
+  // Ancien format scorepilot_users
+  try {
+    const old = JSON.parse(localStorage.getItem('scorepilot_users') || '{}');
+    Object.entries(old).forEach(([uid, u]) => {
+      if (uid === 'meta' || seen.has(uid)) return;
+      seen.add(uid);
+      users.push({ uid, name: u.name || uid, status: (u.status || 'FREE').toUpperCase(), raw: u });
+    });
+  } catch(e) {}
+
+  return users;
+}
+
+function onTargetChange() {
+  const val = document.getElementById('target').value;
+  const block = document.getElementById('customBlock');
+  if (val === 'custom') {
+    block.style.display = 'block';
+    // Recharger la liste à chaque fois qu'on sélectionne "custom"
+    refreshUserChips();
+  } else {
+    block.style.display = 'none';
+    selectedUserId = '';
+  }
+  countRecipients();
+}
+
+function refreshUserChips() {
+  const users = getAllUsers();
+  const container = document.getElementById('userChips');
+  selectedUserId = '';
+  document.getElementById('customUser').value = '';
+
+  if (!users.length) {
+    container.innerHTML = '<span style="color:rgba(255,255,255,0.3);font-size:12px;">Aucun utilisateur trouvé</span>';
+    return;
+  }
+
+  container.innerHTML = '';
+  users.forEach(u => {
+    const chip = document.createElement('div');
+    chip.className = 'user-chip';
+    chip.innerHTML = `${u.name} <span class="user-chip-status">${u.status}</span>`;
+    chip.onclick = () => {
+      // Désélectionner tous
+      container.querySelectorAll('.user-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedUserId = u.uid;
+      document.getElementById('customUser').value = u.uid;
+      countRecipients();
+    };
+    container.appendChild(chip);
+  });
+}
+
+function shouldSend(u, target) {
+  if (target === 'all') return true;
+  if (target === 'custom') {
+    const customVal = (selectedUserId || document.getElementById('customUser')?.value || '').trim();
+    return customVal && (u.uid === customVal || u.uid.includes(customVal));
+  }
+  return u.status === target;
+}
+
+function countRecipients() {
+  const target = document.getElementById('target').value;
+  const users = getAllUsers();
+  const count = users.filter(u => shouldSend(u, target)).length;
+  document.getElementById('recipientCount').textContent = count + ' utilisateur' + (count !== 1 ? 's' : '');
+}
+
+function updatePreview() {
+  const title = document.getElementById('notifTitle').value || 'Titre de la notification';
+  const desc = document.getElementById('notifMessage').value || 'Message de la notification...';
+  document.getElementById('previewTitle').textContent = title;
+  document.getElementById('previewDesc').textContent = desc;
+}
+
+// ─── ENVOI ─────────────────────────────────────────────────────────────────────
+function sendNotif() {
+  const target = document.getElementById('target').value;
+  const title = document.getElementById('notifTitle').value.trim();
+  const message = document.getElementById('notifMessage').value.trim();
+
+  if (!title) { toast('❌ Remplis le titre', 'error'); return; }
+  if (!message) { toast('❌ Remplis le message', 'error'); return; }
+  if (target === 'custom') {
+    const uid = (selectedUserId || document.getElementById('customUser').value || '').trim();
+    if (!uid) { toast('❌ Sélectionne ou entre un userId', 'error'); return; }
+  }
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi...';
+
+  // L'objet notif stocke l'icône directement en string JS — pas d'encodage HTML
+  const notif = {
+    id: Date.now(),
+    icon: selectedIcon,          // string JS pure, pas encodée HTML
+    title,
+    desc: message,
+    color: selectedColor,
+    read: false,
+    time: 'Maintenant',
+    sentAt: new Date().toISOString()
+  };
+
+  const users = getAllUsers();
+  let count = 0;
+
+  users.forEach(u => {
+    if (!shouldSend(u, target)) return;
+    const uid = u.uid;
+    // Écrire dans les deux clés
+    ['sp_notifs_', 'scorepilot_notifs_'].forEach(prefix => {
+      const key = prefix + uid;
+      try {
+        const existing = JSON.parse(localStorage.getItem(key) || '[]');
+        existing.unshift({ ...notif });
+        if (existing.length > 50) existing.length = 50;
+        localStorage.setItem(key, JSON.stringify(existing));
+      } catch(e) {}
+    });
+    count++;
+  });
+
+  // Historique admin
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  history.unshift({ ...notif, recipientCount: count, target });
+  if (history.length > 30) history.length = 30;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+
+  // Reset
+  document.getElementById('notifTitle').value = '';
+  document.getElementById('notifMessage').value = '';
+  updatePreview();
+  loadHistory();
+
+  btn.disabled = false;
+  btn.textContent = '🚀 Envoyer la notification';
+
+  toast(`✅ Envoyé à ${count} utilisateur${count !== 1 ? 's' : ''} !`);
+}
+
+// ─── HISTORIQUE ─────────────────────────────────────────────────────────────────
+function loadHistory() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const div = document.getElementById('historyList');
+  if (!history.length) {
+    div.innerHTML = '<div style="text-align:center;padding:24px;color:rgba(255,255,255,0.25);font-size:13px;">Aucun envoi récent</div>';
+    return;
+  }
+  div.innerHTML = '';
+  history.slice(0, 10).forEach(n => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    // Utiliser textContent pour l'icône afin d'éviter les problèmes HTML
+    const iconEl = document.createElement('span');
+    iconEl.className = 'h-icon';
+    iconEl.textContent = n.icon || '📢';
+    item.appendChild(iconEl);
+    item.innerHTML += `<div class="h-info">
+      <div class="h-title">${esc(n.title)}</div>
+      <div class="h-meta">${n.recipientCount || '?'} dest. · ${fmtDate(n.id)}</div>
+    </div>
+    <button class="h-del" onclick="delHistory(${n.id})">🗑️</button>`;
+    div.appendChild(item);
+  });
+}
+
+function delHistory(id) {
+  const h = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]').filter(n => n.id !== id);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+  loadHistory();
+}
+
+function fmtDate(id) {
+  if (!id || isNaN(id)) return '—';
+  return new Date(Number(id)).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type === 'error' ? '#1a0808' : '#081a08';
+  t.style.border = type === 'error' ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(16,185,129,0.4)';
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Update count when customUser input changes manually
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('customUser')?.addEventListener('input', () => {
+    selectedUserId = document.getElementById('customUser').value.trim();
+    // Désélectionner les chips
+    document.querySelectorAll('.user-chip').forEach(c => c.classList.remove('selected'));
+    countRecipients();
+  });
+});
+</script>
+</body>
+</html>

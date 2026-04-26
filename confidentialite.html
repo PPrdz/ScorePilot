@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de confidentialité — ScorePilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#0a0a0a;color:white;min-height:100vh;padding:40px 24px;-webkit-font-smoothing:antialiased;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0;}
+.page{position:relative;z-index:1;max-width:760px;margin:0 auto;}
+.back-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.7);font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;margin-bottom:40px;transition:all 0.2s;}
+.back-btn:hover{background:rgba(255,255,255,0.09);color:white;}
+.logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,#4A90E2,#7B68EE);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+h1{font-size:32px;font-weight:900;margin-bottom:8px;}
+.date{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:48px;}
+.section{margin-bottom:40px;}
+h2{font-size:18px;font-weight:700;margin-bottom:14px;color:white;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);}
+p{font-size:15px;line-height:1.8;color:rgba(255,255,255,0.75);margin-bottom:12px;}
+ul{padding-left:20px;margin-bottom:12px;}
+li{font-size:15px;line-height:1.8;color:rgba(255,255,255,0.75);margin-bottom:4px;}
+strong{color:white;font-weight:600;}
+.highlight{background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:16px 20px;margin:16px 0;}
+.highlight p{margin:0;color:rgba(255,255,255,0.85);}
+.warn{background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:16px 20px;margin:16px 0;}
+.warn p{margin:0;color:rgba(255,255,255,0.85);}
+a{color:#818cf8;text-decoration:none;}
+a:hover{text-decoration:underline;}
+table{width:100%;border-collapse:collapse;margin:16px 0;}
+th{text-align:left;padding:10px 14px;background:rgba(255,255,255,0.05);font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;}
+td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:14px;color:rgba(255,255,255,0.7);}
+tr:last-child td{border-bottom:none;}
+.footer{margin-top:64px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);font-size:13px;color:rgba(255,255,255,0.3);text-align:center;}
+</style>
+</head>
+<body>
+<div class="page">
+  <a href="login-revolut.html" class="back-btn">← Retour</a>
+
+  <div class="logo">ScorePilot</div>
+  <h1>Politique de confidentialité</h1>
+  <div class="date">Dernière mise à jour : 20 avril 2026 — Conforme au RGPD (Règlement UE 2016/679)</div>
+
+  <div class="section">
+    <h2>1. Qui sommes-nous ?</h2>
+    <p>ScorePilot est une application web destinée aux élèves et étudiants, exploitée à titre personnel par son éditeur. Cette politique de confidentialité décrit comment nous collectons, utilisons et protégeons vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.</p>
+    <div class="highlight">
+      <p>✅ <strong>Principe fondamental :</strong> ScorePilot fonctionne principalement en local dans votre navigateur. La grande majorité de vos données sont stockées sur votre appareil (localStorage) et ne transitent pas par nos serveurs.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>2. Données collectées</h2>
+    <p>Selon votre utilisation, ScorePilot peut traiter les données suivantes :</p>
+    <table>
+      <tr><th>Donnée</th><th>Finalité</th><th>Stockage</th></tr>
+      <tr><td>Nom / prénom</td><td>Identification et personnalisation</td><td>Local (navigateur)</td></tr>
+      <tr><td>Adresse email</td><td>Identification du compte</td><td>Local (navigateur)</td></tr>
+      <tr><td>Mot de passe (haché)</td><td>Authentification</td><td>Local (navigateur)</td></tr>
+      <tr><td>Code PIN</td><td>Sécurité de connexion</td><td>Local (navigateur)</td></tr>
+      <tr><td>Photo de profil</td><td>Personnalisation (optionnel)</td><td>Local (navigateur)</td></tr>
+      <tr><td>Classe / filière</td><td>Personnalisation (optionnel)</td><td>Local (navigateur)</td></tr>
+      <tr><td>Préférences dashboard</td><td>Mémorisation de la configuration</td><td>Local (navigateur)</td></tr>
+      <tr><td>Tâches et priorités</td><td>Organisation scolaire</td><td>Local (navigateur)</td></tr>
+      <tr><td>Points / rang</td><td>Gamification</td><td>Local (navigateur)</td></tr>
+    </table>
+    <p>En cas de connexion Google OAuth : votre email, nom et identifiant Google sont utilisés uniquement pour l'authentification. Aucune donnée Google n'est transmise à des tiers.</p>
+  </div>
+
+  <div class="section">
+    <h2>3. Connexion EcoleDirecte</h2>
+    <div class="warn">
+      <p>⚠️ La connexion EcoleDirecte est <strong>entièrement optionnelle</strong>. Elle n'est activée que si vous choisissez explicitement de la configurer dans les Paramètres.</p>
+    </div>
+    <p>Si vous connectez votre compte EcoleDirecte :</p>
+    <ul>
+      <li>Vos identifiants (login + mot de passe) sont transmis directement et de manière chiffrée à l'API officielle d'EcoleDirecte via HTTPS</li>
+      <li><strong>Votre mot de passe EcoleDirecte n'est jamais stocké</strong> par ScorePilot — ni dans votre navigateur, ni sur un quelconque serveur</li>
+      <li>Seul le <strong>token de session temporaire</strong> retourné par EcoleDirecte est conservé localement dans votre navigateur pour permettre les requêtes suivantes</li>
+      <li>Ce token peut expirer à tout moment et ne permet pas de retrouver votre mot de passe</li>
+    </ul>
+    <p>ScorePilot n'est pas affilié à EcoleDirecte (Aplim). Cette fonctionnalité utilise l'API publique d'EcoleDirecte et son utilisation reste à votre discrétion et sous votre responsabilité.</p>
+  </div>
+
+  <div class="section">
+    <h2>4. Base légale du traitement</h2>
+    <p>Le traitement de vos données repose sur les bases légales suivantes :</p>
+    <ul>
+      <li><strong>Consentement</strong> (article 6.1.a du RGPD) : lors de la création de votre compte, vous consentez explicitement au traitement de vos données d'identification</li>
+      <li><strong>Exécution du contrat</strong> (article 6.1.b) : le traitement de vos données est nécessaire à la fourniture du service (gestion des notes, rangs, tâches, etc.)</li>
+      <li><strong>Intérêt légitime</strong> (article 6.1.f) : amélioration du service et sécurité</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>5. Partage et transfert des données</h2>
+    <p>ScorePilot <strong>ne vend pas</strong> vos données personnelles et <strong>ne les partage pas</strong> avec des tiers à des fins commerciales ou publicitaires.</p>
+    <p>Des données peuvent transiter vers les services suivants, uniquement si vous utilisez les fonctionnalités correspondantes :</p>
+    <ul>
+      <li><strong>Google LLC</strong> (États-Unis) : en cas de connexion via Google OAuth. Soumis au Privacy Shield / Standard Contractual Clauses. <a href="https://policies.google.com/privacy" target="_blank">Politique de confidentialité Google</a></li>
+      <li><strong>Aplim / EcoleDirecte</strong> : en cas de connexion à EcoleDirecte, vos identifiants transitent vers leur API officielle</li>
+      <li><strong>OpenAI</strong> : les fonctionnalités d'IA (Isidor) transmettent les questions posées à l'API OpenAI pour générer les réponses. Aucune donnée d'identification n'est transmise</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>6. Durée de conservation</h2>
+    <p>Vos données locales sont conservées dans votre navigateur tant que vous ne les supprimez pas. Vous pouvez les effacer à tout moment :</p>
+    <ul>
+      <li>Via les <strong>Paramètres</strong> de l'application → "Réinitialiser les données" ou "Supprimer le compte"</li>
+      <li>Via les outils de votre navigateur (effacer les données de site)</li>
+    </ul>
+    <p>ScorePilot ne conserve aucune copie de vos données sur des serveurs tiers.</p>
+  </div>
+
+  <div class="section">
+    <h2>7. Vos droits (RGPD)</h2>
+    <p>Conformément au RGPD, vous disposez des droits suivants :</p>
+    <ul>
+      <li><strong>Droit d'accès</strong> : accéder à l'ensemble de vos données (via les Paramètres)</li>
+      <li><strong>Droit de rectification</strong> : modifier vos informations (via les Paramètres)</li>
+      <li><strong>Droit à l'effacement</strong> : supprimer votre compte et toutes vos données</li>
+      <li><strong>Droit à la portabilité</strong> : vos données étant stockées localement, vous pouvez les exporter directement depuis votre navigateur</li>
+      <li><strong>Droit d'opposition</strong> : vous pouvez vous opposer à tout traitement spécifique</li>
+      <li><strong>Droit de retrait du consentement</strong> : vous pouvez retirer votre consentement à tout moment</li>
+    </ul>
+    <p>Ces droits peuvent être exercés directement depuis l'application (Paramètres → Supprimer le compte) ou en nous contactant via les moyens mis à disposition.</p>
+    <p>Si vous estimez que vos droits ne sont pas respectés, vous pouvez introduire une réclamation auprès de la <strong>CNIL</strong> (Commission Nationale de l'Informatique et des Libertés) : <a href="https://www.cnil.fr" target="_blank">www.cnil.fr</a>.</p>
+  </div>
+
+  <div class="section">
+    <h2>8. Cookies et stockage local</h2>
+    <p>ScorePilot n'utilise <strong>pas de cookies</strong> à des fins publicitaires ou de tracking. L'application utilise uniquement le <strong>localStorage</strong> et le <strong>sessionStorage</strong> de votre navigateur pour stocker vos préférences et données localement sur votre appareil.</p>
+    <p>Ces mécanismes de stockage sont strictement nécessaires au fonctionnement du service et ne peuvent pas être désactivés sans rendre l'application inutilisable.</p>
+  </div>
+
+  <div class="section">
+    <h2>9. Sécurité des données</h2>
+    <p>ScorePilot met en œuvre les mesures de sécurité suivantes :</p>
+    <ul>
+      <li>Toutes les communications réseau sont chiffrées via <strong>HTTPS/TLS</strong></li>
+      <li>Les mots de passe de connexion EcoleDirecte ne sont jamais persistés</li>
+      <li>L'accès au service est protégé par un <strong>code PIN</strong> à 4 chiffres</li>
+      <li>Les données sensibles ne sont pas transmises à des serveurs tiers sauf nécessité fonctionnelle explicite</li>
+    </ul>
+    <p>Cependant, aucun système informatique n'est infaillible. Nous vous recommandons de ne pas utiliser ce service sur des appareils partagés ou non sécurisés.</p>
+  </div>
+
+  <div class="section">
+    <h2>10. Mineurs</h2>
+    <p>ScorePilot est destiné aux élèves, dont une partie peut être mineure. Conformément à l'article 8 du RGPD, l'utilisation du service par les moins de 15 ans requiert le consentement préalable d'un titulaire de l'autorité parentale.</p>
+    <p>ScorePilot ne collecte pas sciemment de données relatives à des enfants de moins de 13 ans.</p>
+  </div>
+
+  <div class="section">
+    <h2>11. Modifications de cette politique</h2>
+    <p>Cette politique de confidentialité peut être mise à jour. La date de dernière modification est indiquée en haut du document. Les utilisateurs seront informés de toute modification substantielle via une notification dans l'application.</p>
+  </div>
+
+  <div class="section">
+    <h2>12. Contact et responsable du traitement</h2>
+    <p>Pour toute question relative au traitement de vos données personnelles ou pour exercer vos droits, vous pouvez nous contacter directement via l'application ScorePilot.</p>
+  </div>
+
+  <div class="footer">
+    © 2026 ScorePilot — Tous droits réservés<br>
+    <a href="conditions.html">Conditions d'utilisation</a> · <a href="login-revolut.html">Retour à la connexion</a>
+  </div>
+</div>
+</body>
+</html>

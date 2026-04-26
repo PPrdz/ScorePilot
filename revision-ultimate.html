@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Révision IA - ScorePilot</title>
+<!--
+INSTRUCTIONS POUR OBTENIR UNE CLÉ API CLAUDE:
+1. Va sur https://console.anthropic.com/
+2. Crée un compte ou connecte-toi
+3. Va dans "API Keys"
+4. Crée une nouvelle clé
+5. Copie la clé et remplace la variable API_KEY dans le JavaScript (ligne ~63)
+6. IMPORTANT: Ajoute des crédits à ton compte Anthropic (minimum 5$) pour que l'API fonctionne
+-->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:#0a0a0a;color:white;min-height:100vh;display:flex;flex-direction:column;transition:opacity 0.4s ease;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;z-index:0;}
+.screen{position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;padding:40px;}
+.screen>*{opacity:0;animation:fadeIn 0.6s ease forwards;}
+@keyframes fadeIn{to{opacity:1;}}
+.card{max-width:700px;width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:32px;padding:60px 50px;text-align:center;}
+.step-indicator{font-size:12px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:2px;margin-bottom:32px;}
+.question{font-size:32px;font-weight:900;margin-bottom:16px;line-height:1.3;}
+.subtitle{font-size:16px;color:rgba(255,255,255,0.5);margin-bottom:40px;}
+.options{display:flex;flex-direction:column;gap:16px;}
+.option{padding:24px;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);border-radius:20px;cursor:pointer;transition:all 0.3s;text-align:left;}
+.option:hover{background:rgba(255,255,255,0.08);border-color:rgba(99,102,241,0.3);transform:translateY(-2px);}
+.option.selected{background:rgba(99,102,241,0.15);border-color:#6366f1;}
+.option-icon{font-size:28px;margin-bottom:8px;display:block;}
+.option-title{font-size:18px;font-weight:700;margin-bottom:4px;}
+.option-desc{font-size:13px;color:rgba(255,255,255,0.5);}
+.input{width:100%;padding:18px 24px;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);border-radius:16px;color:white;font-size:16px;margin-bottom:16px;transition:all 0.3s;}
+.input:focus{outline:none;border-color:#6366f1;background:rgba(255,255,255,0.08);}
+.btn{width:100%;padding:20px;background:linear-gradient(135deg,#8B5CF6,#6366f1);border:none;border-radius:16px;color:white;font-weight:800;font-size:17px;cursor:pointer;transition:all 0.3s;margin-top:24px;}
+.btn:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(99,102,241,0.4);}
+.btn-secondary{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.8);}
+.btn-secondary:hover{background:rgba(255,255,255,0.12);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.back-btn{position:fixed;top:32px;left:32px;width:48px;height:48px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:100;transition:all 0.3s;}
+.back-btn:hover{background:rgba(255,255,255,0.1);transform:scale(1.05);}
+.controle-mini{padding:20px;background:rgba(255,255,255,0.05);border-radius:16px;margin-bottom:20px;display:flex;align-items:center;gap:16px;cursor:pointer;border:2px solid transparent;transition:all 0.3s;}
+.controle-mini:hover{border-color:rgba(99,102,241,0.3);background:rgba(255,255,255,0.08);}
+.controle-mini.selected{border-color:#6366f1;background:rgba(99,102,241,0.1);}
+.ia-workspace{position:relative;z-index:1;display:flex;height:calc(100vh - 80px);gap:32px;padding:40px;}
+.blackboard{flex:1;background:rgba(0,0,0,0.5);border:3px solid rgba(255,255,255,0.1);border-radius:24px;position:relative;overflow-y:auto;padding:40px;}
+.chat-panel{width:420px;background:rgba(255,255,255,0.03);border-radius:24px;padding:28px;display:flex;flex-direction:column;}
+.timer-bar{padding:20px;background:rgba(99,102,241,0.1);border-radius:16px;text-align:center;margin-bottom:20px;}
+.timer-display{font-size:48px;font-weight:900;background:linear-gradient(135deg,#8B5CF6,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+.messages{flex:1;overflow-y:auto;margin-bottom:20px;max-height:400px;}
+.msg{padding:12px 16px;border-radius:12px;margin-bottom:12px;max-width:90%;font-size:14px;line-height:1.6;word-wrap:break-word;overflow-wrap:break-word;transition:opacity 0.3s ease;}
+.msg-user{background:rgba(99,102,241,0.15);margin-left:auto;border:1px solid rgba(99,102,241,0.2);text-align:right;}
+.msg-ai{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding-left:16px;}
+.msg-ai-wrap{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+.isidor-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.3);}
+.msg-ai-bubble{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.6;word-wrap:break-word;overflow-wrap:break-word;transition:opacity 0.3s ease;flex:1;}
+.input-bar{display:flex;gap:12px;}
+.chat-input{flex:1;padding:14px 18px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;}
+.send-btn{padding:14px 24px;background:linear-gradient(135deg,#8B5CF6,#6366f1);border:none;border-radius:12px;color:white;font-weight:700;cursor:pointer;font-size:16px;}
+.send-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.stop-btn{width:100%;padding:16px;background:rgba(239,68,68,0.9);border:none;border-radius:14px;color:white;font-weight:800;cursor:pointer;margin-top:16px;}
+.quiz-card{background:rgba(99,102,241,0.1);border:2px solid rgba(99,102,241,0.3);border-radius:20px;padding:28px;margin-bottom:20px;}
+.quiz-question{font-size:20px;font-weight:700;margin-bottom:20px;}
+.quiz-options{display:flex;flex-direction:column;gap:12px;}
+.quiz-option{padding:16px 20px;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);border-radius:12px;cursor:pointer;transition:all 0.2s;}
+.quiz-option:hover{background:rgba(255,255,255,0.08);border-color:rgba(99,102,241,0.3);}
+.quiz-option.correct{background:rgba(16,185,129,0.2);border-color:#10b981;}
+.quiz-option.wrong{background:rgba(239,68,68,0.2);border-color:#ef4444;}
+.pause-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;backdrop-filter:blur(10px);}
+.pause-text{font-size:64px;font-weight:900;margin-bottom:20px;background:linear-gradient(135deg,#8B5CF6,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:16px;}
+.pause-emoji{font-size:64px;filter:none;-webkit-text-fill-color:initial;background:none;}
+.pause-subtitle{font-size:24px;color:rgba(255,255,255,0.7);margin-bottom:40px;}
+.pause-timer{font-size:96px;font-weight:900;color:white;margin-bottom:20px;}
+.next-break{font-size:14px;color:rgba(255,255,255,0.4);margin-top:8px;}
+.typing-indicator{display:flex;align-items:center;gap:6px;display:inline-block;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:8px;margin:4px 0;}
+.typing-dot{display:inline-block;width:8px;height:8px;background:rgba(255,255,255,0.5);border-radius:50%;margin:0 2px;animation:typingDot 1.4s infinite;}
+.typing-dot:nth-child(2){animation-delay:0.2s;}
+.typing-dot:nth-child(3){animation-delay:0.4s;}
+@keyframes typingDot{0%,60%,100%{opacity:0.3;transform:translateY(0);}30%{opacity:1;transform:translateY(-10px);}}
+.loading-content{animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.6;}50%{opacity:1;}}
+.correction-btn{width:100%;max-width:400px;margin:32px auto 0;padding:18px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:16px;color:white;font-weight:800;font-size:16px;cursor:pointer;transition:all 0.3s;}
+.correction-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(16,185,129,0.4);}
+.user-answer{width:100%;padding:12px 16px;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:15px;margin:12px 0;font-family:inherit;resize:vertical;min-height:80px;}
+.user-answer:focus{outline:none;border-color:#6366f1;background:rgba(255,255,255,0.08);}
+</style>
+</head>
+<body>
+<div class="back-btn" onclick="goBack()">←</div>
+<div class="screen" id="screen"></div>
+<script>
+const API_KEY='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';  // ⚠️ METTRE VOTRE CLÉ OPENAI ICI: https://platform.openai.com/api-keys
+const API_URL='https://api.openai.com/v1/chat/completions';
+const MODEL='gpt-4o-mini';
+let step=1,config={},tech='';
+let workDuration=25*60;let breakDuration=5*60;let nextBreakTime=workDuration;let isPaused=false;let pauseTimeLeft=0;
+let currentContent='';let sessionStartTime=Date.now();let totalRRearned=0;let uploadedFiles=[];
+const currentUser=JSON.parse(sessionStorage.getItem('currentUser')||'{}');
+const userId=(currentUser.name||'guest').replace(/\s+/g,'_').toLowerCase();
+const SAVED=[
+{id:1,mat:'Mathématiques',theme:'Probabilités',date:'18/02'},
+{id:2,mat:'Physique',theme:'Optique',date:'20/02'},
+{id:3,mat:'Histoire',theme:'Révolution',date:'22/02'}
+];
+
+function render(){
+const s=document.getElementById('screen');
+if(step===1)renderStep1();
+else if(step===2)renderStep2();
+else if(step===3)renderStep3();
+else if(step===4)startIA();
+}
+
+function renderStep1(){
+document.getElementById('screen').innerHTML=`
+<div class="card">
+<div class="step-indicator">ÉTAPE 1 • CONTRÔLE</div>
+<div class="question">Quel contrôle réviser ?</div>
+<div class="subtitle">Sélectionne un contrôle</div>
+<div class="options">
+${SAVED.map(c=>`
+<div class="controle-mini" onclick="selectControle(${c.id})">
+<div style="width:48px;height:48px;background:rgba(99,102,241,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;">📚</div>
+<div style="flex:1;">
+<div style="font-weight:700;font-size:16px;margin-bottom:2px;">${c.mat}</div>
+<div style="font-size:13px;color:rgba(255,255,255,0.5);">${c.theme} • ${c.date}</div>
+</div>
+</div>
+`).join('')}
+<div class="option" onclick="newControle()">
+<span class="option-icon">✨</span>
+<div class="option-title">Nouveau contrôle</div>
+<div class="option-desc">Crée un contrôle personnalisé</div>
+</div>
+</div>
+</div>
+`;
+}
+
+function selectControle(id){
+config=SAVED.find(c=>c.id===id);
+step=2;
+render();
+}
+
+function newControle(){
+document.getElementById('screen').innerHTML=`
+<div class="card">
+<div class="step-indicator">ÉTAPE 1 • NOUVEAU</div>
+<div class="question">Configure le contrôle</div>
+<div class="subtitle">Remplis les infos</div>
+<input type="text" class="input" id="mat" placeholder="Matière">
+<input type="text" class="input" id="theme" placeholder="Thème">
+<button class="btn" onclick="saveNew()">Continuer →</button>
+<button class="btn btn-secondary" onclick="step=1;render()">← Retour</button>
+</div>
+`;
+}
+
+function saveNew(){
+const mat=document.getElementById('mat').value.trim();
+const theme=document.getElementById('theme').value.trim();
+if(!mat||!theme){showRevToast('❌ Remplis tous les champs','error');return;}
+config={mat,theme};
+step=2;
+render();
+}
+
+function renderStep2(){
+document.getElementById('screen').innerHTML=`
+<div class="card">
+<div class="step-indicator">ÉTAPE 2 • DÉTAILS</div>
+<div class="question">Détails du contrôle</div>
+<div class="subtitle">Infos supplémentaires (optionnel)</div>
+<input type="text" class="input" id="duree" placeholder="Durée (ex: 2h)">
+<textarea class="input" id="chapitres" placeholder="Chapitres concernés" style="min-height:100px;resize:vertical;"></textarea>
+<button class="btn" onclick="saveDetails()">Continuer →</button>
+<button class="btn btn-secondary" onclick="step=1;render()">← Retour</button>
+</div>
+`;
+}
+
+function saveDetails(){
+config.duree=document.getElementById('duree').value||'Non spécifié';
+config.chapitres=document.getElementById('chapitres').value||'Non spécifié';
+step=3;
+render();
+}
+
+function renderStep3(){
+document.getElementById('screen').innerHTML=`
+<div class="card">
+<div class="step-indicator">ÉTAPE 3 • TECHNIQUE</div>
+<div class="question">Choisis ta technique</div>
+<div class="subtitle">Comment veux-tu réviser ?</div>
+<div class="options">
+<div class="option" onclick="tech='quiz';step=4;render()">
+<span class="option-icon">🎯</span>
+<div class="option-title">Quiz interactifs</div>
+<div class="option-desc">Questions générées par IA</div>
+</div>
+<div class="option" onclick="tech='exos';step=4;render()">
+<span class="option-icon">✍️</span>
+<div class="option-title">Exercices pratiques</div>
+<div class="option-desc">Problèmes à résoudre</div>
+</div>
+<div class="option" onclick="tech='controle';step=4;render()">
+<span class="option-icon">📝</span>
+<div class="option-title">Mini contrôle</div>
+<div class="option-desc">Simulation évaluation</div>
+</div>
+<div class="option" onclick="tech='flashcards';step=4;render()">
+<span class="option-icon">🃏</span>
+<div class="option-title">Flashcards IA</div>
+<div class="option-desc">Répétition espacée</div>
+</div>
+</div>
+<button class="btn btn-secondary" onclick="step=2;render()">← Retour</button>
+</div>
+`;
+}
+
+let timerInt,timerSec=0,currentQuiz=null;
+function startIA(){
+document.getElementById('screen').innerHTML=`
+<div class="ia-workspace">
+<div class="blackboard" id="blackboard">
+<div class="loading-content" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">
+<div style="font-size:48px;margin-bottom:16px;">⏳</div>
+<div style="font-size:16px;">Isidor génère ton contenu...</div>
+</div>
+</div>
+<div class="chat-panel">
+<div class="timer-bar">
+<div class="timer-display" id="timer">00:00</div>
+<div class="next-break" id="nextBreak">Pause dans 25:00</div>
+<div style="font-size:12px;color:rgba(255,255,255,0.5);">Min 10 min pour +10 RR</div>
+</div>
+<div style="padding:16px;background:rgba(99,102,241,0.1);border-radius:12px;margin-bottom:16px;">
+<div style="font-weight:700;font-size:16px;margin-bottom:4px;">${config.mat}</div>
+<div style="font-size:13px;color:rgba(255,255,255,0.5);">${config.theme} • ${getTechName()}</div>
+</div>
+<div class="messages" id="messages">
+<div class="msg-ai-wrap"><img src="isidor-avatar-transparent.png" class="isidor-avatar" onerror="this.style.display='none'"><div class="msg-ai-bubble">👋 Prêt ! Je génère du contenu...</div></div>
+</div>
+<div id="uploadedFilesContainer"></div>
+<label class="file-upload-btn">
+<input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg,.txt,.docx" style="display:none;" onchange="handleFileUpload(event)">
+📎 Ajouter des documents
+</label>
+<div class="input-bar">
+<input type="text" class="chat-input" id="userInput" placeholder="Pose une question..." onkeypress="if(event.key==='Enter')sendMsg()">
+<button class="send-btn" id="sendBtn" onclick="sendMsg()">▶</button>
+</div>
+<button class="stop-btn" onclick="stopSession()">⏹️ Terminer</button>
+</div>
+</div>
+`;
+startTimer();
+generateContent();
+}
+
+function getTechName(){
+const map={quiz:'Quiz',exos:'Exercices',controle:'Mini contrôle',flashcards:'Flashcards'};
+return map[tech]||'IA';
+}
+
+async function generateContent(){
+if(tech==='quiz')await generateQuiz();
+else if(tech==='exos')await generateExercise();
+else if(tech==='controle')await generateMiniControle();
+else await generateFlashcards();
+}
+
+async function generateQuiz(){
+try{
+const fileContext=uploadedFiles.length>0?`\n\nDocuments fournis par l'élève:\n${uploadedFiles.map(f=>`- ${f.name}: ${f.content.substring(0,500)}`).join('\n')}`:'';
+const prompt=`Génère un QCM de 5 questions sur ${config.theme} en ${config.mat}.${fileContext}\n\nFormat JSON strict:\n[{"q":"Question?","opts":["A","B","C","D"],"correct":0}]\nRéponds UNIQUEMENT en JSON valide.`;
+const res=await fetch(API_URL,{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'Authorization':`Bearer ${API_KEY}`
+},
+body:JSON.stringify({
+model:MODEL,
+max_tokens:2000,
+messages:[{role:'user',content:prompt}]
+})
+}).catch(err=>{throw new Error('Failed to fetch - Vérifie ta connexion internet')});
+if(!res.ok){
+const errorText=await res.text();
+throw new Error(`HTTP ${res.status}: ${errorText}`);
+}
+const data=await res.json();
+let text=data.choices[0].message.content;
+text=text.replace(/```json|```/g,'').trim();
+const quiz=JSON.parse(text);
+currentQuiz=quiz;
+currentContent=JSON.stringify(quiz,null,2);
+displayQuiz(0);
+}catch(e){
+document.getElementById('blackboard').innerHTML=`<div style="padding:40px;text-align:center;color:#ef4444;">❌ Erreur IA: ${e.message}</div>`;
+addMsg('❌ '+e.message,'ai');
+}
+}
+
+let quizScore=0,quizIndex=0;
+function displayQuiz(idx){
+if(idx>=currentQuiz.length){
+document.getElementById('blackboard').innerHTML=`<div style="text-align:center;padding:60px;"><div style="font-size:64px;margin-bottom:20px;">🎉</div><div style="font-size:32px;font-weight:900;margin-bottom:12px;">Quiz terminé !</div><div style="font-size:20px;color:#818cf8;">Score: ${quizScore}/${currentQuiz.length}</div><button class="btn" style="max-width:300px;margin:32px auto 0;" onclick="generateQuiz()">Nouveau quiz</button></div>`;
+return;
+}
+const q=currentQuiz[idx];
+document.getElementById('blackboard').innerHTML=`
+<div class="quiz-card">
+<div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;">Question ${idx+1}/${currentQuiz.length}</div>
+<div class="quiz-question">${q.q}</div>
+<div class="quiz-options">
+${q.opts.map((opt,i)=>`<div class="quiz-option" onclick="checkAnswer(${i},${q.correct})">${opt}</div>`).join('')}
+</div>
+</div>
+`;
+addMsg(`Question ${idx+1} affichée`,'ai');
+}
+
+function checkAnswer(selected,correct){
+const opts=document.querySelectorAll('.quiz-option');
+opts.forEach((opt,i)=>{
+opt.style.pointerEvents='none';
+if(i===correct)opt.classList.add('correct');
+else if(i===selected)opt.classList.add('wrong');
+});
+if(selected===correct){quizScore++;addMsg('✅ Bonne réponse !','ai');}
+else{addMsg(`❌ Mauvaise réponse. La bonne était: ${correct+1}`,'ai');}
+quizIndex++;
+setTimeout(()=>displayQuiz(quizIndex),2000);
+}
+
+async function generateExercise(){
+try{
+const fileContext=uploadedFiles.length>0?`\n\nDocuments fournis par l'élève:\n${uploadedFiles.map(f=>`- ${f.name}: ${f.content}`).join('\n')}`:'';
+const prompt=`Génère un exercice pratique sur ${config.theme} en ${config.mat}.${fileContext}\n\nIMPORTANT: Donne UNIQUEMENT l'énoncé de l'exercice, PAS la solution. L'élève doit pouvoir répondre sans voir la réponse. Utilise le markdown pour formater (** pour gras, * pour italique, ### pour titres).`;
+const res=await fetch(API_URL,{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'Authorization':`Bearer ${API_KEY}`
+},
+body:JSON.stringify({
+model:MODEL,
+max_tokens:1500,
+messages:[{role:'user',content:prompt}]
+})
+}).catch(err=>{throw new Error('Failed to fetch')});
+if(!res.ok)throw new Error(`HTTP ${res.status}`);
+const data=await res.json();
+const text=data.choices[0].message.content;
+currentContent=text;
+const formatted=formatMarkdown(text);
+document.getElementById('blackboard').innerHTML=`
+<div style="padding:32px;">
+<div style="font-size:24px;font-weight:800;margin-bottom:20px;">✍️ Exercice</div>
+<div style="font-size:16px;line-height:1.8;margin-bottom:24px;">${formatted}</div>
+<div style="border-top:2px solid rgba(255,255,255,0.1);padding-top:24px;">
+<div style="font-size:18px;font-weight:700;margin-bottom:16px;">📝 Ta réponse :</div>
+<textarea class="user-answer" id="exerciseAnswer" placeholder="Écris ta réponse ici..."></textarea>
+<button class="correction-btn" onclick="correctExercise()">✓ Demander la correction</button>
+</div>
+</div>`;
+addMsg('Exercice généré','ai');
+}catch(e){
+document.getElementById('blackboard').innerHTML=`<div style="padding:40px;color:#ef4444;">❌ Erreur: ${e.message}</div>`;
+addMsg('❌ '+e.message,'ai');
+}
+}
+
+async function generateMiniControle(){
+try{
+const fileContext=uploadedFiles.length>0?`\n\nDocuments fournis par l'élève:\n${uploadedFiles.map(f=>`- ${f.name}: ${f.content}`).join('\n')}`:'';
+const prompt=`Génère un mini contrôle (3 exercices) sur ${config.theme} en ${config.mat}, durée ${config.duree}.${fileContext}\n\nIMPORTANT: 
+- Donne UNIQUEMENT les énoncés des 3 exercices, PAS les solutions
+- Sépare clairement chaque exercice avec des titres "### Exercice 1", "### Exercice 2", "### Exercice 3"
+- Utilise le markdown pour formater (** pour gras, * pour italique)
+- L'élève doit pouvoir répondre sans voir les réponses`;
+const res=await fetch(API_URL,{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'Authorization':`Bearer ${API_KEY}`
+},
+body:JSON.stringify({
+model:MODEL,
+max_tokens:2000,
+messages:[{role:'user',content:prompt}]
+})
+}).catch(err=>{throw new Error('Failed to fetch')});
+if(!res.ok)throw new Error(`HTTP ${res.status}`);
+const data=await res.json();
+const text=data.choices[0].message.content;
+currentContent=text;
+const formatted=formatMarkdown(text);
+// Split by exercise headers
+const exercises=formatted.split(/<h3[^>]*>Exercice \d+[^<]*<\/h3>/gi);
+const headers=formatted.match(/<h3[^>]*>Exercice \d+[^<]*<\/h3>/gi)||[];
+let html=`<div style="padding:32px;"><div style="font-size:24px;font-weight:800;margin-bottom:20px;">📝 Mini Contrôle</div>`;
+// Reconstruct with answer boxes after each exercise
+for(let i=0;i<headers.length;i++){
+html+=`
+<div style="margin-bottom:32px;">
+${headers[i]}
+<div style="font-size:16px;line-height:1.8;margin:16px 0;">${exercises[i+1]||''}</div>
+<div style="background:rgba(255,255,255,0.02);padding:16px;border-radius:12px;margin-top:16px;">
+<div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.6);margin-bottom:8px;">📝 Ta réponse :</div>
+<textarea class="user-answer" id="answer${i+1}" placeholder="Écris ta réponse pour cet exercice..." style="min-height:60px;"></textarea>
+</div>
+</div>`;
+}
+html+=`<button class="correction-btn" onclick="correctControle()">✓ Corriger tout le contrôle</button></div>`;
+document.getElementById('blackboard').innerHTML=html;
+addMsg('Mini contrôle prêt','ai');
+}catch(e){
+document.getElementById('blackboard').innerHTML=`<div style="padding:40px;color:#ef4444;">❌ Erreur: ${e.message}</div>`;
+addMsg('❌ '+e.message,'ai');
+}
+}
+
+async function generateFlashcards(){
+try{
+const fileContext=uploadedFiles.length>0?`\n\nDocuments fournis par l'élève:\n${uploadedFiles.map(f=>`- ${f.name}: ${f.content.substring(0,500)}`).join('\n')}`:'';
+const prompt=`Génère 10 flashcards sur ${config.theme} en ${config.mat}.${fileContext}\n\nFormat JSON strict: [{"front":"Question","back":"Réponse"}]\nRéponds UNIQUEMENT en JSON valide.`;
+const res=await fetch(API_URL,{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'Authorization':`Bearer ${API_KEY}`
+},
+body:JSON.stringify({
+model:MODEL,
+max_tokens:2000,
+messages:[{role:'user',content:prompt}]
+})
+}).catch(err=>{throw new Error('Failed to fetch')});
+if(!res.ok)throw new Error(`HTTP ${res.status}`);
+const data=await res.json();
+let text=data.choices[0].message.content;
+text=text.replace(/```json|```/g,'').trim();
+const cards=JSON.parse(text);
+currentContent=JSON.stringify(cards,null,2);
+let cardIdx=0;
+let showingAnswer=false;
+window.showCard=function(){
+if(cardIdx>=cards.length){
+document.getElementById('blackboard').innerHTML=`<div style="text-align:center;padding:60px;"><div style="font-size:64px;margin-bottom:20px;">🎉</div><div style="font-size:32px;font-weight:900;">Flashcards terminées !</div></div>`;
+return;
+}
+const c=cards[cardIdx];
+showingAnswer=false;
+document.getElementById('blackboard').innerHTML=`<div style="padding:60px;text-align:center;"><div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Carte ${cardIdx+1}/${cards.length}</div><div id="cardContent" style="font-size:24px;font-weight:700;margin-bottom:40px;min-height:100px;display:flex;align-items:center;justify-content:center;">${c.front}</div><button class="btn" id="flashBtn" style="max-width:300px;margin:0 auto;" onclick="window.flipCard()">Voir la réponse</button></div>`;
+window.flipCard=()=>{
+if(!showingAnswer){
+document.getElementById('cardContent').textContent=c.back;
+document.getElementById('flashBtn').textContent='Question suivante →';
+showingAnswer=true;
+}else{
+cardIdx++;
+window.showCard();
+}
+};
+};
+window.showCard();
+addMsg('10 flashcards générées','ai');
+}catch(e){
+document.getElementById('blackboard').innerHTML=`<div style="padding:40px;color:#ef4444;">❌ Erreur: ${e.message}</div>`;
+addMsg('❌ '+e.message,'ai');
+}
+}
+
+async function sendMsg(){
+const input=document.getElementById('userInput');
+const msg=input.value.trim();
+if(!msg)return;
+addMsg(msg,'user');
+input.value='';
+document.getElementById('sendBtn').disabled=true;
+try{
+const contextInfo=currentContent?`\n\nContenu actuellement affiché à l'élève:\n${currentContent.substring(0,1000)}`:'';
+const fileInfo=uploadedFiles.length>0?`\n\nDocuments fournis:\n${uploadedFiles.map(f=>`- ${f.name}: ${f.content.substring(0,300)}`).join('\n')}`:'';
+const prompt=`Tu es Isidor, assistant en ${config.mat}. L'élève révise: ${config.theme}. Technique: ${getTechName()}.${contextInfo}${fileInfo}\n\nQuestion de l'élève: ${msg}\n\nRéponds de manière concise et pédagogique.`;
+const res=await fetch(API_URL,{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'Authorization':`Bearer ${API_KEY}`
+},
+body:JSON.stringify({
+model:MODEL,
+max_tokens:1000,
+messages:[{role:'user',content:prompt}]
+})
+}).catch(err=>{throw new Error('Failed to fetch')});
+if(!res.ok)throw new Error(`HTTP ${res.status}`);
+const data=await res.json();
+const text=data.choices[0].message.content;
+addMsg(text,'ai');
+}catch(e){
+addMsg('❌ Erreur: '+e.message,'ai');
+}
+document.getElementById('sendBtn').disabled=false;
+}
+
+function addMsg(text,type){
+const messagesContainer=document.getElementById('messages');
+if(type==='ai'){
+// Typing indicator avec avatar Isidor
+const typingWrap=document.createElement('div');
+typingWrap.className='msg-ai-wrap';
+typingWrap.id='typing-indicator';
+typingWrap.innerHTML=`<img src="isidor-avatar-transparent.png" class="isidor-avatar" onerror="this.style.display='none'">
+<div class="msg-ai-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+messagesContainer.appendChild(typingWrap);
+messagesContainer.scrollTop=9999;
+setTimeout(()=>{
+const typingEl=document.getElementById('typing-indicator');
+if(typingEl)typingEl.remove();
+const wrap=document.createElement('div');
+wrap.className='msg-ai-wrap';
+wrap.style.opacity='0';
+const avatar=document.createElement('img');
+avatar.src='isidor-avatar-transparent.png';
+avatar.className='isidor-avatar';
+avatar.onerror=()=>avatar.style.display='none';
+const bubble=document.createElement('div');
+bubble.className='msg-ai-bubble';
+bubble.innerHTML=formatMarkdown(text);
+wrap.appendChild(avatar);
+wrap.appendChild(bubble);
+messagesContainer.appendChild(wrap);
+messagesContainer.scrollTop=9999;
+setTimeout(()=>wrap.style.opacity='1',50);
+},800);
+}else{
+const div=document.createElement('div');
+div.className=`msg msg-${type}`;
+div.textContent=text;
+messagesContainer.appendChild(div);
+messagesContainer.scrollTop=9999;
+}
+}
+
+function startTimer(){
+timerInt=setInterval(()=>{
+if(isPaused){
+pauseTimeLeft--;
+if(pauseTimeLeft<=0){
+endPause();
+}
+updatePauseDisplay();
+return;
+}
+timerSec++;
+const m=Math.floor(timerSec/60);
+const s=timerSec%60;
+const el=document.getElementById('timer');
+if(el)el.textContent=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+const breakEl=document.getElementById('nextBreak');
+if(breakEl){
+const timeUntilBreak=nextBreakTime-timerSec;
+if(timeUntilBreak<=0){
+startPause();
+}else{
+const bm=Math.floor(timeUntilBreak/60);
+const bs=timeUntilBreak%60;
+breakEl.textContent=`⏸️ Pause dans ${bm}:${bs.toString().padStart(2,'0')}`;
+}
+}
+},1000);
+}
+
+function startPause(){
+isPaused=true;
+pauseTimeLeft=breakDuration;
+nextBreakTime+=workDuration+breakDuration;
+showPauseOverlay();
+}
+
+function endPause(){
+isPaused=false;
+hidePauseOverlay();
+}
+
+function showPauseOverlay(){
+const overlay=document.createElement('div');
+overlay.id='pauseOverlay';
+overlay.className='pause-overlay';
+overlay.innerHTML=`
+<div class="pause-text"><span class="pause-emoji">⏸️</span> PAUSE</div>
+<div class="pause-subtitle">Temps de repos bien mérité !</div>
+<div class="pause-timer" id="pauseTimer">5:00</div>
+<div style="font-size:16px;color:rgba(255,255,255,0.5);">Reprise de la session dans...</div>
+`;
+document.body.appendChild(overlay);
+}
+
+function hidePauseOverlay(){
+const overlay=document.getElementById('pauseOverlay');
+if(overlay)overlay.remove();
+}
+
+function updatePauseDisplay(){
+const pTimer=document.getElementById('pauseTimer');
+if(pTimer){
+const m=Math.floor(pauseTimeLeft/60);
+const s=pauseTimeLeft%60;
+pTimer.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+}
+}
+
+function stopSession(){
+clearInterval(timerInt);
+const durationMin=Math.floor(timerSec/60);
+if(timerSec>=600){
+// Créditer les RR
+const pts=parseInt(localStorage.getItem(`sp_points_${userId}`)||'0');
+const earned=10+Math.floor((timerSec-600)/300)*2; // +2 RR chaque 5 min supplémentaires
+localStorage.setItem(`sp_points_${userId}`,pts+earned);
+localStorage.setItem(`scorepilot_points_${userId}`,pts+earned);
+// Intégrer au système de rang si un quiz a été fait
+if(quizIndex>0&&typeof window.addMatchToRanking==='function'){
+const matchData={
+subject:config.mat||'Révision',
+totalQuestions:Math.max(quizIndex,1),
+correctAnswers:quizScore,
+duration:`${durationMin} min`
+};
+const match=window.addMatchToRanking(matchData);
+sessionStorage.setItem('lastMatch',JSON.stringify(match));
+}
+showSessionResult(durationMin,earned);
+}else{
+showSessionTooShort(durationMin);
+}
+}
+
+function showSessionResult(durationMin,earned){
+const overlay=document.createElement('div');
+overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
+overlay.innerHTML=`<div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:40px;max-width:420px;width:100%;text-align:center;animation:_si 0.3s ease;"><style>@keyframes _si{from{opacity:0;transform:scale(0.9)}to{opacity:1}}</style>
+<div style="font-size:64px;margin-bottom:16px;">🎉</div>
+<div style="font-size:28px;font-weight:900;margin-bottom:8px;">Session terminée !</div>
+<div style="font-size:15px;color:rgba(255,255,255,0.5);margin-bottom:28px;">${config.mat} · ${config.theme}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px;">
+  <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:18px;"><div style="font-size:28px;font-weight:800;color:#6366f1;">+${earned}</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;">RR gagnés</div></div>
+  <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:18px;"><div style="font-size:28px;font-weight:800;color:#10b981;">${durationMin}</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;">minutes</div></div>
+  ${quizIndex>0?`<div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:18px;grid-column:1/-1;"><div style="font-size:24px;font-weight:800;color:#f59e0b;">${quizScore}/${quizIndex}</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;">bonnes réponses</div></div>`:''}
+</div>
+<button onclick="overlay_done()" style="width:100%;padding:16px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:14px;color:white;font-size:16px;font-weight:700;cursor:pointer;">Retour au dashboard</button>
+</div>`;
+document.body.appendChild(overlay);
+window.overlay_done=()=>{ overlay.remove(); fadeNavigate('dashboard.html'); };
+}
+
+function showSessionTooShort(durationMin){
+const overlay=document.createElement('div');
+overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
+overlay.innerHTML=`<div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:40px;max-width:380px;width:100%;text-align:center;animation:_si 0.3s ease;"><style>@keyframes _si{from{opacity:0;transform:scale(0.9)}to{opacity:1}}</style>
+<div style="font-size:52px;margin-bottom:16px;">⏱️</div>
+<div style="font-size:22px;font-weight:800;margin-bottom:8px;">Session trop courte</div>
+<div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:28px;">Il faut au moins <strong style="color:white;">10 minutes</strong> pour gagner des RR.<br>Tu as révisé ${durationMin} min.</div>
+<div style="display:flex;gap:12px;">
+  <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Continuer</button>
+  <button onclick="this.closest('[style*=fixed]').remove();fadeNavigate('dashboard.html')" style="flex:1;padding:14px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:12px;color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;">Quitter</button>
+</div>
+</div>`;
+document.body.appendChild(overlay);
+}
+
+function goBack(){
+if(step===4){
+const overlay=document.createElement('div');
+overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
+overlay.innerHTML=`<div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:32px;max-width:360px;width:100%;text-align:center;animation:_qi 0.25s ease;"><style>@keyframes _qi{from{opacity:0;transform:scale(0.94)}to{opacity:1}}</style>
+<div style="font-size:44px;margin-bottom:12px;">🚪</div>
+<div style="font-size:20px;font-weight:800;margin-bottom:8px;">Quitter la session ?</div>
+<div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:24px;">Ta progression en cours sera perdue.</div>
+<div style="display:flex;gap:10px;">
+  <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Rester</button>
+  <button onclick="this.closest('[style*=fixed]').remove();clearInterval(timerInt);fadeNavigate('dashboard.html')" style="flex:1;padding:13px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:12px;color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;">Quitter</button>
+</div>
+</div>`;
+document.body.appendChild(overlay);
+}else if(step>1){
+step--;
+render();
+}else{
+fadeNavigate('dashboard.html');
+}
+}
+
+function formatMarkdown(text){
+// First, protect math formulas (anything between $ or $$)
+const mathPlaceholders = [];
+text = text.replace(/\$\$([^\$]+)\$\$/g, (match, formula) => {
+const placeholder = `___MATH_BLOCK_${mathPlaceholders.length}___`;
+mathPlaceholders.push(formula);
+return placeholder;
+});
+text = text.replace(/\$([^\$]+)\$/g, (match, formula) => {
+const placeholder = `___MATH_INLINE_${mathPlaceholders.length}___`;
+mathPlaceholders.push(formula);
+return placeholder;
+});
+
+// Apply markdown formatting
+text = text
+.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+.replace(/\*(.+?)\*/g,'<em>$1</em>')
+.replace(/###\s+(.+)/g,'<h3 style="font-size:20px;font-weight:800;margin:20px 0 12px;">$1</h3>')
+.replace(/##\s+(.+)/g,'<h2 style="font-size:24px;font-weight:800;margin:24px 0 16px;">$1</h2>')
+.replace(/\n\n/g,'<br><br>')
+.replace(/\n/g,'<br>');
+
+// Restore math formulas with proper HTML
+mathPlaceholders.forEach((formula, i) => {
+if (text.includes(`___MATH_BLOCK_${i}___`)) {
+text = text.replace(`___MATH_BLOCK_${i}___`, `<span style="display:block;margin:12px 0;font-family:monospace;background:rgba(255,255,255,0.05);padding:8px;border-radius:8px;">$${formula}$$</span>`);
+}
+if (text.includes(`___MATH_INLINE_${i}___`)) {
+text = text.replace(`___MATH_INLINE_${i}___`, `<code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;font-family:monospace;">$${formula}$</code>`);
+}
+});
+
+return text;
+}
+
+async function handleFileUpload(event){
+const files=Array.from(event.target.files);
+for(const file of files){
+const reader=new FileReader();
+reader.onload=async(e)=>{
+let content='';
+if(file.type==='application/pdf'){
+content='[PDF file uploaded]';
+}else if(file.type.startsWith('image/')){
+content='[Image file uploaded]';
+}else{
+content=e.target.result;
+}
+uploadedFiles.push({name:file.name,type:file.type,content:content});
+displayUploadedFiles();
+addMsg(`📎 Fichier ajouté: ${file.name}`,'ai');
+};
+if(file.type.startsWith('image/')){
+reader.readAsDataURL(file);
+}else{
+reader.readAsText(file);
+}
+}
+}
+
+function displayUploadedFiles(){
+const container=document.getElementById('uploadedFilesContainer');
+container.innerHTML=uploadedFiles.map((f,i)=>`
+<div class="uploaded-file">
+<span>📎 ${f.name}</span>
+<span class="remove-file" onclick="removeFile(${i})">✕</span>
+</div>
+`).join('');
+}
+
+function removeFile(index){
+uploadedFiles.splice(index,1);
+displayUploadedFiles();
+addMsg('Fichier retiré','ai');
+}
+
+async function correctExercise(){
+const userAnswer=document.getElementById('exerciseAnswer').value.trim();
+if(!userAnswer){showRevToast('❌ Écris ta réponse d\'abord','error');return;}
+const corrBtn=document.querySelector('.correction-btn');
+corrBtn.disabled=true;
+corrBtn.textContent='⏳ Correction en cours...';
+try{
+const prompt=`Tu es un professeur de ${config.mat}. Voici l'exercice donné:\n\n${currentContent}\n\nVoici la réponse de l'élève:\n${userAnswer}\n\nDonne une correction détaillée avec:\n1. Note sur 20\n2. Points forts\n3. Erreurs et explications\n4. La correction complète\n\nUtilise le markdown pour formater.`;
+const res=await fetch(API_URL,{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'Authorization':`Bearer ${API_KEY}`
+},
+body:JSON.stringify({
+model:MODEL,
+max_tokens:2000,
+messages:[{role:'user',content:prompt}]
+})
+});
+if(!res.ok)throw new Error(`HTTP ${res.status}`);
+const data=await res.json();
+const correction=data.choices[0].message.content;
+const formatted=formatMarkdown(correction);
+document.getElementById('blackboard').innerHTML=`
+<div style="padding:32px;">
+<div style="font-size:24px;font-weight:800;margin-bottom:20px;">✅ Correction</div>
+<div style="font-size:16px;line-height:1.8;">${formatted}</div>
+</div>`;
+addMsg('Correction reçue !','ai');
+}catch(e){
+showRevToast('❌ Erreur IA — réessaie','error');
+corrBtn.disabled=false;
+corrBtn.textContent='✓ Demander la correction';
+}
+}
+
+async function correctControle(){
+const answers=[];
+for(let i=1;i<=3;i++){
+const answerEl=document.getElementById(`answer${i}`);
+if(answerEl){
+answers.push(`Exercice ${i}: ${answerEl.value.trim()||'(Pas de réponse)'}`);
+}
+}
+if(answers.every(a=>a.includes('(Pas de réponse)'))){
+showRevToast('❌ Écris au moins une réponse','error');
+return;
+}
+const corrBtn=document.querySelector('.correction-btn');
+corrBtn.disabled=true;
+corrBtn.textContent='⏳ Correction en cours...';
+try{
+const userAnswers=answers.join('\n\n');
+const prompt=`Tu es un professeur de ${config.mat}. Voici le mini contrôle donné:\n\n${currentContent}\n\nVoici les réponses de l'élève:\n${userAnswers}\n\nDonne une correction détaillée avec:\n1. Note globale sur 20\n2. Correction exercice par exercice avec:\n   - La réponse de l'élève\n   - Ce qui est juste/faux\n   - La correction attendue\n   - Les points obtenus\n3. Commentaire général et conseils\n\nUtilise le markdown pour formater.`;
+const res=await fetch(API_URL,{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'Authorization':`Bearer ${API_KEY}`
+},
+body:JSON.stringify({
+model:MODEL,
+max_tokens:3000,
+messages:[{role:'user',content:prompt}]
+})
+});
+if(!res.ok)throw new Error(`HTTP ${res.status}`);
+const data=await res.json();
+const correction=data.choices[0].message.content;
+const formatted=formatMarkdown(correction);
+document.getElementById('blackboard').innerHTML=`
+<div style="padding:32px;">
+<div style="font-size:24px;font-weight:800;margin-bottom:20px;">✅ Correction</div>
+<div style="font-size:16px;line-height:1.8;">${formatted}</div>
+</div>`;
+addMsg('Correction reçue !','ai');
+}catch(e){
+showRevToast('❌ Erreur IA — réessaie','error');
+corrBtn.disabled=false;
+corrBtn.textContent='✓ Corriger tout le contrôle';
+}
+}
+
+
+function showRevToast(msg, type='info') {
+  let t = document.getElementById('_revToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_revToast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;z-index:2000;transition:all 0.3s;color:white;opacity:0;transform:translateY(10px);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = type === 'error' ? '#1a0808' : '#081a08';
+  t.style.border = type === 'error' ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(16,185,129,0.35)';
+  t.style.opacity = '1'; t.style.transform = 'translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(10px)'; }, 2800);
+}
+function fadeNavigate(url){
+document.body.style.opacity='0';
+setTimeout(()=>window.location.href=url,400);
+}
+
+window.addEventListener('load',()=>render());
+</script>
+</body>
+</html>

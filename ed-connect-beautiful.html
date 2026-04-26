@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion EcoleDirecte - ScorePilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:#0a0a0a;color:white;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;transition:opacity 0.4s;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;z-index:0;}
+
+/* FIX: back-btn dans son propre conteneur positionné */
+.page-header{position:relative;z-index:1;width:100%;max-width:480px;margin-bottom:16px;}
+.back-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;color:rgba(255,255,255,0.7);transition:all 0.2s;}
+.back-btn:hover{background:rgba(255,255,255,0.09);color:white;}
+
+.wrap{position:relative;z-index:1;max-width:480px;width:100%;display:flex;flex-direction:column;align-items:center;}
+.card{background:rgba(255,255,255,0.03);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.1);border-radius:28px;padding:44px;text-align:center;width:100%;}
+
+.ed-logo{font-size:64px;margin-bottom:16px;}
+.title{font-size:28px;font-weight:900;margin-bottom:8px;}
+.subtitle{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:24px;line-height:1.5;}
+
+.security-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:100px;font-size:12px;font-weight:600;color:#10b981;margin-bottom:28px;}
+
+.field{text-align:left;margin-bottom:18px;}
+.lbl{font-size:12px;font-weight:700;color:rgba(255,255,255,0.45);margin-bottom:8px;display:block;text-transform:uppercase;letter-spacing:0.5px;}
+.inp{width:100%;padding:14px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:15px;outline:none;transition:all 0.2s;}
+.inp:focus{border-color:rgba(99,102,241,0.55);background:rgba(255,255,255,0.07);}
+.inp::placeholder{color:rgba(255,255,255,0.2);}
+.pass-wrap{position:relative;}
+.pass-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:16px;padding:4px;transition:color 0.2s;line-height:1;}
+.pass-toggle:hover{color:rgba(255,255,255,0.8);}
+
+.btn{width:100%;padding:16px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:14px;color:white;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(99,102,241,0.35);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+.error-box{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:14px 16px;font-size:13px;color:#fca5a5;text-align:left;margin-bottom:16px;line-height:1.6;display:none;}
+.error-box.show{display:block;}
+
+.info-box{background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:14px;padding:16px;font-size:13px;color:rgba(255,255,255,0.6);text-align:left;margin-top:20px;line-height:1.7;}
+.info-box strong{color:white;}
+
+/* LOADING */
+.loading{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,10,0.97);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.loading.show{display:flex;}
+.spinner{width:56px;height:56px;border:4px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:spin 0.9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-title{font-size:20px;font-weight:700;}
+.loading-step{font-size:14px;color:rgba(255,255,255,0.45);}
+.loading-bar{width:260px;height:4px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;}
+.loading-fill{height:100%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:100px;width:0%;transition:width 0.5s ease;}
+
+/* SUCCESS */
+.success-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,10,0.97);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:32px;}
+.success-overlay.show{display:flex;}
+.success-icon{font-size:72px;animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
+.success-title{font-size:28px;font-weight:900;}
+.success-sub{font-size:15px;color:rgba(255,255,255,0.5);max-width:300px;line-height:1.5;}
+.success-info{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:14px;padding:16px;max-width:320px;width:100%;text-align:left;}
+.success-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.success-row:last-child{border-bottom:none;}
+.success-key{color:rgba(255,255,255,0.4);}
+.success-val{font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- BACK BTN en dehors de la card, dans son propre wrapper -->
+  <div class="page-header">
+    <div class="back-btn" onclick="goBack()">← Retour</div>
+  </div>
+
+  <div class="card">
+    <div class="ed-logo">🏫</div>
+    <div class="title">EcoleDirecte</div>
+    <div class="subtitle">Connecte ton compte pour synchroniser tes notes, devoirs et absences.</div>
+    <div class="security-badge">🔒 Mot de passe jamais stocké</div>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="field">
+      <label class="lbl">Identifiant EcoleDirecte</label>
+      <input type="text" class="inp" id="edUser" placeholder="Ton identifiant ou email ED" autocomplete="username">
+    </div>
+    <div class="field">
+      <label class="lbl">Mot de passe</label>
+      <div class="pass-wrap">
+        <input type="password" class="inp" id="edPass" placeholder="Ton mot de passe EcoleDirecte" autocomplete="current-password">
+        <button class="pass-toggle" id="passToggle" onclick="togglePass()" tabindex="-1">👁️</button>
+      </div>
+    </div>
+
+    <button class="btn" id="connectBtn" onclick="connectED()">Se connecter à EcoleDirecte</button>
+
+    <div class="info-box">
+      <strong>🛡️ Confidentialité garantie</strong><br>
+      Ton mot de passe sert uniquement à obtenir un <strong>token de session</strong> auprès d'EcoleDirecte. Il n'est jamais sauvegardé — seul le token temporaire est conservé localement.
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-title">Connexion en cours...</div>
+  <div class="loading-step" id="loadStep">Connexion à EcoleDirecte...</div>
+  <div class="loading-bar"><div class="loading-fill" id="loadFill"></div></div>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-icon">✅</div>
+  <div class="success-title">Connecté !</div>
+  <div class="success-sub">Tes données EcoleDirecte sont maintenant accessibles dans ScorePilot.</div>
+  <div class="success-info" id="successInfo"></div>
+</div>
+
+<script>
+const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+const userId = (currentUser.name || 'guest').replace(/\s+/g, '_').toLowerCase();
+
+document.body.style.opacity = '0';
+setTimeout(() => document.body.style.opacity = '1', 50);
+
+// Afficher état si déjà connecté
+const existingED = localStorage.getItem(`sp_ed_${userId}`) || localStorage.getItem(`scorepilot_ed_${userId}`);
+if (existingED) {
+  try {
+    const ed = JSON.parse(existingED);
+    const nameStr = [ed.prenom, ed.nom].filter(Boolean).join(' ') || ed.username || '?';
+    document.querySelector('.subtitle').textContent = `Déjà connecté en tant que ${nameStr}. Tu peux rafraîchir la connexion ci-dessous.`;
+    document.querySelector('.security-badge').innerHTML = '✅ Token actif — connexion en cours';
+  } catch(e) {}
+}
+
+function goBack() { window.location.href = 'settings.html'; }
+
+function togglePass() {
+  const inp = document.getElementById('edPass');
+  const btn = document.getElementById('passToggle');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁️' : '🙈';
+}
+
+function setStep(text, pct) {
+  document.getElementById('loadStep').textContent = text;
+  document.getElementById('loadFill').style.width = pct + '%';
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.innerHTML = msg;
+  box.classList.add('show');
+  setTimeout(() => box.classList.remove('show'), 8000);
+}
+
+// ─── STRATÉGIES D'APPEL ED ───────────────────────────────────────────────────
+// 1. Backend local (server.js sur port 3000) — le plus fiable
+// 2. corsproxy.io — proxy public
+// 3. allorigins — proxy alternatif
+
+async function tryBackendLocal(username, password) {
+  const r = await fetch('http://localhost:3000/api/ed/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+    signal: AbortSignal.timeout(8000)
+  });
+  if (!r.ok) throw new Error('Backend local: ' + r.status);
+  const data = await r.json();
+  if (!data.success) throw new Error(data.error || 'Identifiants incorrects');
+  // Le backend retourne déjà les données formatées
+  return {
+    token: data.data.token,
+    edUserId: data.data.id,
+    nom: data.data.nom,
+    prenom: data.data.prenom,
+    typeCompte: data.data.typeCompte,
+    nomEtablissement: data.data.etablissements?.[0]?.nomEtablissement || '',
+    source: 'backend_local'
+  };
+}
+
+async function tryProxyDirect(username, password) {
+  const ED_URL = 'https://api.ecoledirecte.com/v3/login.awp';
+  const uuid = (crypto.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    .replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==='x'?r:(r&0x3|0x8)).toString(16); }));
+
+  const payload = { identifiant: username, motdepasse: password, uuid, isReLogin: false, fa: [] };
+  const body = 'data=' + encodeURIComponent(JSON.stringify(payload));
+
+  const PROXIES = [
+    { url: 'https://corsproxy.io/?' + encodeURIComponent(ED_URL), wrap: false },
+  ];
+
+  for (const p of PROXIES) {
+    try {
+      const r = await fetch(p.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!r.ok) continue;
+      let data = await r.json();
+      if (p.wrap && data.contents) data = JSON.parse(data.contents);
+
+      if (data.code === 200 && data.data?.accounts?.length) {
+        const acc = data.data.accounts[0];
+        return {
+          token: data.token,
+          edUserId: acc.id,
+          nom: acc.nom,
+          prenom: acc.prenom,
+          typeCompte: acc.typeCompte,
+          nomEtablissement: acc.nomEtablissement || acc.profile?.nomEtablissement || '',
+          source: 'proxy'
+        };
+      }
+      if (data.code === 505 || data.code === 74) {
+        throw new Error('2FA_REQUIRED');
+      }
+      throw new Error(data.message || `Code ${data.code}`);
+    } catch(e) {
+      if (e.message === '2FA_REQUIRED') throw e;
+      console.warn('Proxy échoué:', p.url, e.message);
+    }
+  }
+  throw new Error('CORS_BLOCKED');
+}
+
+async function connectED() {
+  const username = document.getElementById('edUser').value.trim();
+  const password = document.getElementById('edPass').value;
+
+  if (!username || !password) { showError('❌ Remplis tous les champs'); return; }
+
+  const btn = document.getElementById('connectBtn');
+  btn.disabled = true;
+  document.getElementById('errorBox').classList.remove('show');
+  document.getElementById('loading').classList.add('show');
+  setStep('Tentative via backend local...', 20);
+
+  let result = null;
+  let lastError = '';
+
+  // Stratégie 1 : backend local (node server.js)
+  try {
+    setStep('Connexion via backend local...', 30);
+    result = await tryBackendLocal(username, password);
+    setStep('Backend local ✓', 70);
+  } catch(e) {
+    console.warn('Backend local non disponible:', e.message);
+    lastError = e.message;
+
+    // Stratégie 2 : proxy CORS
+    try {
+      setStep('Connexion via proxy CORS...', 45);
+      result = await tryProxyDirect(username, password);
+      setStep('Proxy ✓', 70);
+    } catch(e2) {
+      if (e2.message === '2FA_REQUIRED') {
+        document.getElementById('loading').classList.remove('show');
+        btn.disabled = false;
+        showError(`⚠️ <strong>Double authentification (2FA) activée</strong><br><br>
+          EcoleDirecte exige une vérification supplémentaire.<br>
+          Pour te connecter, désactive temporairement le 2FA sur 
+          <a href="https://www.ecoledirecte.com" target="_blank" style="color:#818cf8;">ecoledirecte.com</a> 
+          puis réessaie.`);
+        return;
+      }
+      if (e2.message === 'CORS_BLOCKED') {
+        document.getElementById('loading').classList.remove('show');
+        btn.disabled = false;
+        showError(`❌ <strong>Connexion bloquée (CORS)</strong><br><br>
+          <strong>Solution recommandée :</strong> Lance le backend local :<br>
+          <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">node server.js</code> dans le dossier du projet<br><br>
+          <strong>Alternative :</strong> Installe l'extension 
+          <a href="https://chrome.google.com/webstore/detail/cors-unblock" target="_blank" style="color:#818cf8;">CORS Unblock</a> 
+          sur Chrome puis réessaie.`);
+        return;
+      }
+      document.getElementById('loading').classList.remove('show');
+      btn.disabled = false;
+      showError(`❌ Erreur : ${e2.message}<br>Vérifie tes identifiants sur <a href="https://www.ecoledirecte.com" target="_blank" style="color:#818cf8;">ecoledirecte.com</a>`);
+      return;
+    }
+  }
+
+  if (!result) {
+    document.getElementById('loading').classList.remove('show');
+    btn.disabled = false;
+    showError('❌ Connexion échouée — ' + lastError);
+    return;
+  }
+
+  setStep('Sauvegarde sécurisée...', 90);
+
+  // SÉCURITÉ : stocker UNIQUEMENT le token, jamais le mot de passe
+  const edData = {
+    username: username,          // identifiant (pas le mdp)
+    prenom: result.prenom || '',
+    nom: result.nom || '',
+    typeCompte: result.typeCompte || 'E',
+    nomEtablissement: result.nomEtablissement || '',
+    token: result.token,         // token temporaire ED
+    edUserId: result.edUserId,
+    provider: 'ecoledirecte',
+    connectedAt: Date.now(),
+    source: result.source        // pour debug
+    // ❌ NE PAS ajouter : password, motdepasse
+  };
+
+  localStorage.setItem(`sp_ed_${userId}`, JSON.stringify(edData));
+  localStorage.setItem(`scorepilot_ed_${userId}`, JSON.stringify(edData));
+
+  setStep('Connexion établie !', 100);
+  await new Promise(r => setTimeout(r, 500));
+
+  document.getElementById('loading').classList.remove('show');
+  document.getElementById('successInfo').innerHTML = `
+    <div class="success-row"><span class="success-key">Compte</span><span class="success-val">${edData.prenom} ${edData.nom}</span></div>
+    <div class="success-row"><span class="success-key">Type</span><span class="success-val">${edData.typeCompte === 'E' ? '🎓 Élève' : edData.typeCompte === 'P' ? '👨‍🏫 Parent' : edData.typeCompte}</span></div>
+    <div class="success-row"><span class="success-key">Établissement</span><span class="success-val">${edData.nomEtablissement || '—'}</span></div>
+    <div class="success-row"><span class="success-key">Méthode</span><span class="success-val">${result.source === 'backend_local' ? '🖥️ Backend local' : '🌐 Proxy CORS'}</span></div>
+    <div class="success-row"><span class="success-key">Sécurité</span><span class="success-val" style="color:#10b981;">Mot de passe non stocké ✓</span></div>
+  `;
+  document.getElementById('successOverlay').classList.add('show');
+
+  setTimeout(() => { window.location.href = 'dashboard.html'; }, 2500);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('edPass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') connectED();
+  });
+});
+</script>
+</body>
+</html>

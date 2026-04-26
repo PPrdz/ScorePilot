@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScorePilot - Connexion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg-mid:#151B2B; --bg-start:#0D0F15; --bg-end:#1A2332;
+      --surface:rgba(255,255,255,0.05);
+      --border:rgba(255,255,255,0.08); --border-s:rgba(255,255,255,0.15);
+      --text:#fff; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45);
+      --blue:#0066FF; --blue-h:#0052CC;
+      --r:12px; --rxl:24px;
+    }
+    body {
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+      background:radial-gradient(ellipse at top,var(--bg-mid) 0%,var(--bg-start) 50%,var(--bg-end) 100%);
+      background-attachment:fixed; color:var(--text);
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      padding:24px; -webkit-font-smoothing:antialiased;
+    }
+    .wrap { width:100%; max-width:420px; animation:up .6s cubic-bezier(.16,1,.3,1); }
+    @keyframes up { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+
+    .logo { text-align:center; margin-bottom:48px; }
+    .logo-t {
+      font-size:32px; font-weight:700; letter-spacing:-.02em;
+      background:linear-gradient(135deg,#fff,rgba(255,255,255,.8));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .logo-s { font-size:14px; color:var(--text2); margin-top:8px; }
+
+    .card {
+      background:var(--surface); backdrop-filter:blur(40px);
+      border:1px solid var(--border); border-radius:var(--rxl);
+      padding:32px; box-shadow:0 24px 48px rgba(0,0,0,.2);
+    }
+
+    /* TABS */
+    .tabs { display:flex; gap:8px; background:rgba(0,0,0,.2); padding:4px; border-radius:var(--r); margin-bottom:28px; }
+    .tab { flex:1; padding:12px; border:none; background:transparent; color:var(--text2); font:600 14px 'Inter',sans-serif; border-radius:8px; cursor:pointer; transition:.2s; }
+    .tab.on { background:var(--surface); color:var(--text); box-shadow:0 2px 8px rgba(0,0,0,.1); }
+
+    /* ERROR */
+    .ebox { padding:12px 16px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:var(--r); color:#fca5a5; font-size:13px; font-weight:500; display:none; margin-bottom:18px; }
+    .ebox.show { display:block; animation:shake .3s; }
+    @keyframes shake { 0%,100%{transform:none} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+    /* PANELS */
+    .pane { display:none; }
+    .pane.on { display:block; }
+
+    /* FIELDS */
+    .stack { display:flex; flex-direction:column; gap:16px; }
+    .fg { display:flex; flex-direction:column; gap:7px; }
+    .lbl { font-size:13px; font-weight:600; color:var(--text2); }
+    .inp {
+      width:100%; padding:14px 16px; background:rgba(0,0,0,.2);
+      border:1px solid var(--border); border-radius:var(--r);
+      color:var(--text); font:500 15px 'Inter',sans-serif; outline:none; transition:.2s;
+    }
+    .inp::placeholder { color:var(--text3); }
+    .inp:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(0,102,255,.1); }
+
+    /* BUTTONS */
+    .btn { width:100%; padding:15px; background:var(--blue); border:none; border-radius:var(--r); color:#fff; font:600 15px 'Inter',sans-serif; cursor:pointer; transition:.2s; margin-top:4px; }
+    .btn:hover { background:var(--blue-h); transform:translateY(-1px); box-shadow:0 8px 16px rgba(0,102,255,.3); }
+    .btn:active { transform:none; }
+    .gbtn { width:100%; padding:13px; background:#fff; border:none; border-radius:var(--r); color:#1a1a1a; font:600 15px 'Inter',sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:.2s; }
+    .gbtn:hover { transform:translateY(-1px); box-shadow:0 8px 20px rgba(255,255,255,.18); }
+    .gbtn:disabled { opacity:.55; cursor:not-allowed; transform:none; box-shadow:none; }
+    .gico { width:20px; height:20px; flex-shrink:0; }
+
+    .divr { display:flex; align-items:center; gap:12px; }
+    .divl { flex:1; height:1px; background:var(--border); }
+    .divt { font-size:12px; color:var(--text3); }
+
+    .helper { font-size:12px; color:var(--text3); text-align:center; margin-top:20px; line-height:1.5; }
+    .helper a { color:var(--blue); text-decoration:none; font-weight:600; cursor:pointer; }
+    .helper a:hover { text-decoration:underline; }
+
+    /* PIN MODAL */
+    .pinm { position:fixed; inset:0; background:rgba(0,0,0,.8); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; z-index:1000; }
+    .pinm.show { display:flex; }
+    .pinbox { width:90%; max-width:400px; padding:40px; text-align:center; animation:slideUp .3s; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:none} }
+    .pin-h { font-size:24px; font-weight:700; margin-bottom:8px; }
+    .pin-s { font-size:14px; color:var(--text2); margin-bottom:32px; }
+    .dots { display:flex; justify-content:center; gap:16px; margin-bottom:32px; }
+    .dot { width:16px; height:16px; border-radius:50%; background:rgba(255,255,255,.2); transition:.3s; }
+    .dot.on { background:var(--blue); box-shadow:0 0 12px rgba(0,102,255,.5); }
+    .kpad { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
+    .k { aspect-ratio:1; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:12px; font-size:20px; font-weight:600; color:#fff; cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center; }
+    .k:hover { background:rgba(255,255,255,.1); transform:scale(1.05); }
+    .k:active { transform:scale(.95); }
+    .k.del { background:rgba(239,68,68,.2); border-color:rgba(239,68,68,.3); }
+    .pcancel { width:100%; padding:12px; background:transparent; border:1px solid var(--border); border-radius:12px; color:var(--text2); font-size:14px; cursor:pointer; transition:.2s; margin-top:16px; }
+    .pcancel:hover { background:rgba(255,255,255,.05); color:#fff; }
+    .perr { color:#ef4444; font-size:13px; margin-top:16px; min-height:20px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-t">ScorePilot</div>
+    <div class="logo-s">Pilote ta scolarité pour performer</div>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" id="tabLogin" onclick="goTab('login')">Connexion</button>
+      <button class="tab"    id="tabSignup" onclick="goTab('signup')">Inscription</button>
+    </div>
+
+    <div class="ebox" id="ebox"></div>
+
+    <!-- CONNEXION -->
+    <div class="pane on" id="paneLogin">
+      <div class="stack">
+        <button class="gbtn" id="gBtnLogin" onclick="startGoogle('login')">
+          <svg class="gico" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Se connecter avec Google
+        </button>
+        <div class="divr"><div class="divl"></div><div class="divt">ou avec email</div><div class="divl"></div></div>
+        <div class="fg">
+          <label class="lbl">Email</label>
+          <input type="email" id="lEmail" class="inp" placeholder="jean.dupont@example.com" autocomplete="email">
+        </div>
+        <div class="fg">
+          <label class="lbl">Mot de passe</label>
+          <input type="password" id="lPass" class="inp" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn" onclick="doLogin()">Se connecter</button>
+      </div>
+    </div>
+
+    <!-- INSCRIPTION -->
+    <div class="pane" id="paneSignup">
+      <div class="stack">
+        <button class="gbtn" id="gBtnSignup" onclick="startGoogle('signup')">
+          <svg class="gico" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          S'inscrire avec Google
+        </button>
+        <div class="divr"><div class="divl"></div><div class="divt">ou avec email</div><div class="divl"></div></div>
+        <div class="fg">
+          <label class="lbl">Nom complet</label>
+          <input type="text" id="sName" class="inp" placeholder="Jean Dupont" autocomplete="name">
+        </div>
+        <div class="fg">
+          <label class="lbl">Email</label>
+          <input type="email" id="sEmail" class="inp" placeholder="jean.dupont@example.com" autocomplete="email">
+        </div>
+        <div class="fg">
+          <label class="lbl">Mot de passe</label>
+          <input type="password" id="sPass" class="inp" placeholder="Minimum 8 caractères" autocomplete="new-password">
+        </div>
+        <div class="fg">
+          <label class="lbl">Confirmer le mot de passe</label>
+          <input type="password" id="sPassC" class="inp" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <button class="btn" onclick="doSignup()">Créer un compte</button>
+      </div>
+    </div>
+
+    <div class="helper">
+      En continuant, vous acceptez nos
+      <a onclick="window.location.href='conditions.html'">Conditions d'utilisation</a>
+      et notre
+      <a onclick="window.location.href='confidentialite.html'">Politique de confidentialité</a>
+    </div>
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="pinm" id="pinModal">
+  <div class="pinbox glass">
+    <div class="pin-h">Code PIN</div>
+    <div class="pin-s" id="pinSub">Entre ton code PIN à 4 chiffres</div>
+    <div class="dots">
+      <div class="dot" id="d1"></div><div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div><div class="dot" id="d4"></div>
+    </div>
+    <div class="kpad">
+      <button class="k" onclick="kp('1')">1</button>
+      <button class="k" onclick="kp('2')">2</button>
+      <button class="k" onclick="kp('3')">3</button>
+      <button class="k" onclick="kp('4')">4</button>
+      <button class="k" onclick="kp('5')">5</button>
+      <button class="k" onclick="kp('6')">6</button>
+      <button class="k" onclick="kp('7')">7</button>
+      <button class="k" onclick="kp('8')">8</button>
+      <button class="k" onclick="kp('9')">9</button>
+      <div></div>
+      <button class="k" onclick="kp('0')">0</button>
+      <button class="k del" onclick="kpDel()">⌫</button>
+    </div>
+    <div class="perr" id="pinErr"></div>
+    <button class="pcancel" onclick="closePin()">Annuler</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  TOUTES LES VARIABLES GLOBALES EN PREMIER
+// ═══════════════════════════════════════════════════════
+const G_CLIENT_ID = '766004927475-d87qe7dmstbte61dvodptcof7r4lr98c.apps.googleusercontent.com';
+
+let currentUser  = null;  // utilisateur en attente de PIN
+let pinCode      = '';    // PIN saisi
+let gClient      = null;  // client Google OAuth
+let gMode        = '';    // 'login' ou 'signup' — défini AVANT tout appel Google
+
+// ═══════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════
+function goTab(tab) {
+  document.getElementById('tabLogin').classList.toggle('on',  tab === 'login');
+  document.getElementById('tabSignup').classList.toggle('on', tab === 'signup');
+  document.getElementById('paneLogin').classList.toggle('on',  tab === 'login');
+  document.getElementById('paneSignup').classList.toggle('on', tab === 'signup');
+  hideErr();
+}
+
+// ═══════════════════════════════════════════════════════
+//  MESSAGES D'ERREUR
+// ═══════════════════════════════════════════════════════
+function showErr(msg) {
+  const b = document.getElementById('ebox');
+  b.textContent = msg;
+  b.classList.add('show');
+  clearTimeout(showErr._t);
+  showErr._t = setTimeout(() => b.classList.remove('show'), 6000);
+}
+function hideErr() { document.getElementById('ebox').classList.remove('show'); }
+
+// ═══════════════════════════════════════════════════════
+//  BASE DE DONNÉES UTILISATEURS (localStorage)
+// ═══════════════════════════════════════════════════════
+function getAllUsers() {
+  const list = [];
+  // Format actuel : scorepilot_user_*
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith('scorepilot_user_')) continue;
+    try { list.push(JSON.parse(localStorage.getItem(k))); } catch(_) {}
+  }
+  // Ancien format : objet scorepilot_users
+  try {
+    const old = JSON.parse(localStorage.getItem('scorepilot_users') || '{}');
+    Object.values(old).forEach(u => {
+      if (u.email && !list.find(x => x.email === u.email)) list.push(u);
+    });
+  } catch(_) {}
+  return list;
+}
+
+function findByEmail(email) {
+  if (!email) return null;
+  const e = email.toLowerCase().trim();
+  return getAllUsers().find(u => u.email && u.email.toLowerCase() === e) || null;
+}
+
+function findByEmailAndPass(email, pass) {
+  if (!email || !pass) return null;
+  const e = email.toLowerCase().trim();
+  return getAllUsers().find(u => {
+    if (!u.email || u.email.toLowerCase() !== e) return false;
+    // Pas de password stocké (ex: compte admin sans hash) → accepter
+    return !u.password || u.password === pass;
+  }) || null;
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONNEXION PAR EMAIL
+// ═══════════════════════════════════════════════════════
+function doLogin() {
+  const email = (document.getElementById('lEmail').value || '').trim();
+  const pass  =  document.getElementById('lPass').value  || '';
+
+  if (!email || !pass) { showErr('Remplis tous les champs'); return; }
+
+  // Compte Google → refuser mot de passe
+  const found = findByEmail(email);
+  if (found && found.provider === 'google') {
+    showErr('Ce compte utilise Google — clique sur "Se connecter avec Google"');
+    return;
+  }
+
+  const user = findByEmailAndPass(email, pass);
+  if (!user) { showErr('Email ou mot de passe incorrect'); return; }
+
+  currentUser = user;
+  showPin();
+}
+
+// Entrée clavier sur le champ mot de passe connexion
+document.getElementById('lPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ═══════════════════════════════════════════════════════
+//  INSCRIPTION PAR EMAIL
+// ═══════════════════════════════════════════════════════
+function doSignup() {
+  const name  = (document.getElementById('sName').value  || '').trim();
+  const email = (document.getElementById('sEmail').value || '').trim();
+  const pass  =  document.getElementById('sPass').value  || '';
+  const passC =  document.getElementById('sPassC').value || '';
+
+  if (!name || !email || !pass || !passC) { showErr('Remplis tous les champs'); return; }
+  if (pass !== passC) { showErr('Les mots de passe ne correspondent pas'); return; }
+  if (pass.length < 8) { showErr('Mot de passe : 8 caractères minimum'); return; }
+  if (findByEmail(email)) { showErr('Cet email est déjà utilisé'); return; }
+
+  // Créer le compte temporaire et aller à l'onboarding
+  const newUser = {
+    id: 'user_' + Date.now(),
+    name, email,
+    password: pass,
+    provider: 'email',
+    role: 'student', status: 'FREE', plan: 'free',
+    joinDate: new Date().toISOString().split('T')[0]
+  };
+
+  sessionStorage.setItem('newUser', JSON.stringify(newUser));
+  window.location.href = 'onboarding.html';
+}
+
+// Entrée clavier sur la confirmation du mot de passe
+document.getElementById('sPassC').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSignup();
+});
+
+// ═══════════════════════════════════════════════════════
+//  GOOGLE OAUTH
+// ═══════════════════════════════════════════════════════
+
+// Initialiser le client Google (appelé dès que la lib est disponible)
+function initGoogle() {
+  if (gClient || typeof google === 'undefined' || !G_CLIENT_ID) return false;
+  try {
+    gClient = google.accounts.oauth2.initTokenClient({
+      client_id: G_CLIENT_ID,
+      scope: 'email profile openid',
+      callback: onGoogleToken,
+      error_callback: (e) => {
+        resetGBtns();
+        // Popup fermée → silence
+        const silent = ['popup_closed', 'popup_failed_to_open'];
+        if (e && !silent.includes(e.type)) {
+          showErr('Erreur Google : ' + (e.message || e.type));
+        }
+      }
+    });
+    return true;
+  } catch(e) {
+    console.warn('Google init failed:', e);
+    return false;
+  }
+}
+
+// Polling pour attendre que le script GSI soit chargé (async defer)
+window.addEventListener('load', () => {
+  if (!initGoogle()) {
+    const iv = setInterval(() => {
+      if (initGoogle()) clearInterval(iv);
+    }, 200);
+    setTimeout(() => clearInterval(iv), 15000);
+  }
+});
+
+// Point d'entrée unique Google — mode est 'login' ou 'signup'
+function startGoogle(mode) {
+  // Fixer le mode AVANT tout le reste
+  gMode = mode;
+
+  if (!G_CLIENT_ID) {
+    showErr('Google OAuth non configuré. Ajoute ton Client ID.');
+    return;
+  }
+
+  // Tenter init si pas encore fait
+  if (!gClient) {
+    if (!initGoogle()) {
+      showErr('Google OAuth se charge, réessaie dans 2 secondes.');
+      return;
+    }
+  }
+
+  // Désactiver les deux boutons Google pendant l'attente
+  const bl = document.getElementById('gBtnLogin');
+  const bs = document.getElementById('gBtnSignup');
+  if (bl) { bl.disabled = true; bl.textContent = 'Ouverture Google...'; }
+  if (bs) { bs.disabled = true; bs.textContent = 'Ouverture Google...'; }
+
+  gClient.requestAccessToken();
+}
+
+function resetGBtns() {
+  const SVG = `<svg class="gico" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>`;
+  const bl = document.getElementById('gBtnLogin');
+  const bs = document.getElementById('gBtnSignup');
+  if (bl) { bl.disabled = false; bl.innerHTML = SVG + ' Se connecter avec Google'; }
+  if (bs) { bs.disabled = false; bs.innerHTML = SVG + " S'inscrire avec Google"; }
+}
+
+async function onGoogleToken(resp) {
+  if (resp.error) {
+    resetGBtns();
+    const silent = ['access_denied', 'popup_closed_by_user', 'popup_blocked'];
+    if (!silent.includes(resp.error)) showErr('Erreur Google : ' + resp.error);
+    return;
+  }
+
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + resp.access_token }
+    });
+    if (!r.ok) throw new Error('Profil Google inaccessible (HTTP ' + r.status + ')');
+    const p = await r.json();
+
+    const email = (p.email || '').toLowerCase().trim();
+    if (!email) { resetGBtns(); showErr('Email Google indisponible'); return; }
+
+    const found = findByEmail(email);
+
+    // ── Pas de compte existant ──────────────────────────────────────────────
+    if (!found) {
+      if (gMode === 'signup') {
+        // Inscription Google → onboarding
+        const newUser = {
+          id: 'user_' + Date.now(),
+          name: p.name || p.given_name || email.split('@')[0],
+          email,
+          googleId: p.sub,
+          photo: p.picture || '',
+          provider: 'google',
+          role: 'student', status: 'FREE', plan: 'free',
+          joinDate: new Date().toISOString().split('T')[0]
+        };
+        resetGBtns();
+        sessionStorage.setItem('newUser', JSON.stringify(newUser));
+        window.location.href = 'onboarding.html';
+      } else {
+        resetGBtns();
+        showErr("Aucun compte trouvé pour cet email Google. Crée un compte dans l'onglet Inscription.");
+      }
+      return;
+    }
+
+    // ── Compte existant avec email/mot de passe ─────────────────────────────
+    if (found.provider !== 'google') {
+      resetGBtns();
+      showErr(gMode === 'signup'
+        ? "Un compte existe déjà avec cet email. Connecte-toi avec ton mot de passe."
+        : "Ce compte utilise un mot de passe — connecte-toi avec email + mot de passe."
+      );
+      return;
+    }
+
+    // ── Compte Google existant → connexion ─────────────────────────────────
+    currentUser = found;
+    resetGBtns();
+    showPin();
+
+  } catch(e) {
+    resetGBtns();
+    showErr('Erreur : ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  PIN
+// ═══════════════════════════════════════════════════════
+function showPin() {
+  pinCode = '';
+  updDots();
+  document.getElementById('pinErr').textContent = '';
+  document.getElementById('pinSub').textContent =
+    currentUser ? `Bonjour ${currentUser.name} 👋` : 'Entre ton code PIN à 4 chiffres';
+  document.getElementById('pinModal').classList.add('show');
+}
+
+function closePin() {
+  document.getElementById('pinModal').classList.remove('show');
+  pinCode = ''; currentUser = null;
+  updDots();
+}
+
+function kp(d) {
+  if (pinCode.length >= 4) return;
+  pinCode += d;
+  updDots();
+  if (pinCode.length === 4) setTimeout(checkPin, 300);
+}
+
+function kpDel() {
+  pinCode = pinCode.slice(0, -1);
+  updDots();
+}
+
+function updDots() {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('d' + i).classList.toggle('on', i <= pinCode.length);
+  }
+}
+
+function checkPin() {
+  if (!currentUser) return;
+  const stored = currentUser.pin || currentUser.code || '1234';
+  if (pinCode === stored) {
+    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+    document.getElementById('pinModal').classList.remove('show');
+    document.body.style.transition = 'opacity .4s';
+    document.body.style.opacity = '0';
+    setTimeout(() => window.location.href = 'dashboard.html', 400);
+  } else {
+    document.getElementById('pinErr').textContent = '❌ Code PIN incorrect';
+    pinCode = ''; updDots();
+    setTimeout(() => document.getElementById('pinErr').textContent = '', 3000);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('pinModal').classList.contains('show')) return;
+  if (e.key >= '0' && e.key <= '9') kp(e.key);
+  else if (e.key === 'Backspace') kpDel();
+  else if (e.key === 'Escape') closePin();
+});
+</script>
+</body>
+</html>

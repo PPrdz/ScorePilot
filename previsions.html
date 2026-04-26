@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prévisions IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:#0a0a0a;color:white;min-height:100vh;padding:32px;}
+.container{max-width:1200px;margin:0 auto;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:48px;}
+.back-btn{width:48px;height:48px;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;}
+.scan-view{text-align:center;padding:80px 40px;}
+.scan-icon{font-size:80px;margin-bottom:32px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+.scan-stats{max-width:500px;margin:0 auto 32px;background:rgba(255,255,255,0.03);border-radius:16px;padding:24px;}
+.stat-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.1);}
+.stat-row:last-child{border-bottom:none;}
+.progress-bar{height:8px;background:rgba(255,255,255,0.1);border-radius:100px;overflow:hidden;margin-bottom:20px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:100px;width:0%;transition:width 0.3s;}
+.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:40px;}
+.plan-card{background:rgba(255,255,255,0.03);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:32px;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;}
+.plan-card:hover{transform:translateY(-8px);border-color:rgba(99,102,241,0.4);box-shadow:0 20px 60px rgba(99,102,241,0.2);}
+.plan-badge{position:absolute;top:16px;right:16px;padding:6px 12px;background:rgba(99,102,241,0.2);border-radius:8px;font-size:11px;font-weight:700;color:#818cf8;}
+.plan-icon{font-size:56px;margin-bottom:20px;}
+.plan-title{font-size:24px;font-weight:800;margin-bottom:12px;}
+.plan-desc{font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:20px;}
+.plan-stats{display:flex;gap:16px;margin-bottom:20px;}
+.plan-stat{flex:1;text-align:center;padding:12px;background:rgba(0,0,0,0.2);border-radius:12px;}
+.plan-stat-value{font-size:24px;font-weight:800;color:#6366f1;}
+.plan-stat-label{font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;}
+.plan-btn{width:100%;padding:14px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:12px;color:white;font-size:15px;font-weight:700;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<div style="display:flex;align-items:center;gap:24px;">
+<div class="back-btn" onclick="window.location.href='dashboard.html'">←</div>
+<h1 style="font-size:36px;font-weight:900;">📊 Prévisions IA</h1>
+</div>
+<div style="font-size:14px;color:rgba(255,255,255,0.6);">Plans personnalisés par IA</div>
+</div>
+
+<div id="scanView" class="scan-view" style="display:none;">
+<div class="scan-icon">🔍</div>
+<div style="font-size:32px;font-weight:800;margin-bottom:16px;">Analyse en cours...</div>
+<div style="font-size:16px;color:rgba(255,255,255,0.7);margin-bottom:40px;">Isidor IA analyse tes données EcoleDirecte</div>
+<div class="scan-stats">
+<div class="stat-row"><span style="color:rgba(255,255,255,0.6);">📊 Notes</span><span id="notesCount" style="font-weight:700;color:#10b981;">0</span></div>
+<div class="stat-row"><span style="color:rgba(255,255,255,0.6);">📚 Matières</span><span id="subjectsCount" style="font-weight:700;color:#6366f1;">0</span></div>
+<div class="stat-row"><span style="color:rgba(255,255,255,0.6);">📈 Progression</span><span id="progressCount" style="font-weight:700;color:#f59e0b;">0%</span></div>
+<div class="stat-row"><span style="color:rgba(255,255,255,0.6);">🎯 Plans</span><span id="plansCount" style="font-weight:700;color:#ef4444;">0/3</span></div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="scanProgress"></div></div>
+<div id="scanStatus" style="font-size:13px;color:rgba(255,255,255,0.5);">Connexion...</div>
+</div>
+
+<div id="plansView">
+<div class="plans-grid">
+<div class="plan-card" onclick="viewPlan(1)">
+<div class="plan-badge">RECOMMANDÉ</div>
+<div class="plan-icon">🎯</div>
+<div class="plan-title">Plan Équilibré</div>
+<div class="plan-desc">Améliore ta moyenne de 1 à 2 points en 4 semaines avec un travail régulier.</div>
+<div class="plan-stats">
+<div class="plan-stat"><div class="plan-stat-value">4</div><div class="plan-stat-label">SEMAINES</div></div>
+<div class="plan-stat"><div class="plan-stat-value">+1.5</div><div class="plan-stat-label">POINTS</div></div>
+</div>
+<button class="plan-btn">Voir le détail</button>
+</div>
+<div class="plan-card" onclick="viewPlan(2)">
+<div class="plan-badge">INTENSIF</div>
+<div class="plan-icon">⚡</div>
+<div class="plan-title">Plan Accéléré</div>
+<div class="plan-desc">Objectif ambitieux : +2.5 points en 3 semaines avec rythme soutenu.</div>
+<div class="plan-stats">
+<div class="plan-stat"><div class="plan-stat-value">3</div><div class="plan-stat-label">SEMAINES</div></div>
+<div class="plan-stat"><div class="plan-stat-value">+2.5</div><div class="plan-stat-label">POINTS</div></div>
+</div>
+<button class="plan-btn">Voir le détail</button>
+</div>
+<div class="plan-card" onclick="viewPlan(3)">
+<div class="plan-badge">DURABLE</div>
+<div class="plan-icon">🌱</div>
+<div class="plan-title">Plan Long Terme</div>
+<div class="plan-desc">Progression stable sur 8 semaines pour résultats durables.</div>
+<div class="plan-stats">
+<div class="plan-stat"><div class="plan-stat-value">8</div><div class="plan-stat-label">SEMAINES</div></div>
+<div class="plan-stat"><div class="plan-stat-value">+3</div><div class="plan-stat-label">POINTS</div></div>
+</div>
+<button class="plan-btn">Voir le détail</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+let currentUser,hasED,scanStep=0;
+const scanSteps=[
+{status:'Connexion ED...',notes:0,subjects:0,progress:0,plans:0,time:500},
+{status:'Récup notes...',notes:45,subjects:0,progress:0,plans:0,time:800},
+{status:'Analyse matières...',notes:45,subjects:8,progress:0,plans:0,time:1000},
+{status:'Calcul progression...',notes:45,subjects:8,progress:35,plans:0,time:1200},
+{status:'Plan équilibré...',notes:45,subjects:8,progress:68,plans:1,time:1000},
+{status:'Plan accéléré...',notes:45,subjects:8,progress:85,plans:2,time:1000},
+{status:'Plan long terme...',notes:45,subjects:8,progress:100,plans:3,time:800},
+{status:'Terminé !',notes:45,subjects:8,progress:100,plans:3,time:500}
+];
+window.addEventListener('load',()=>{
+currentUser=JSON.parse(sessionStorage.getItem('currentUser')||'{}');
+const userId=currentUser.id||currentUser.name.replace(/\s+/g,'_').toLowerCase();
+// Vérifier avec les deux formats de clés
+hasED=!!(localStorage.getItem(`sp_ed_${userId}`)||localStorage.getItem(`scorepilot_ed_${userId}`));
+if(!hasED){
+const overlay=document.createElement('div');
+overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;';
+overlay.innerHTML=`<div style="background:#111;border:1px solid rgba(99,102,241,0.3);border-radius:24px;padding:36px;max-width:400px;width:100%;text-align:center;animation:_oi 0.25s ease;"><style>@keyframes _oi{from{opacity:0;transform:scale(0.94)}to{opacity:1}}</style>
+<div style="font-size:48px;margin-bottom:14px;">🔒</div>
+<div style="font-size:22px;font-weight:800;margin-bottom:8px;">EcoleDirecte requis</div>
+<div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:28px;line-height:1.6;">Connecte ton compte EcoleDirecte pour accéder aux prévisions IA personnalisées.</div>
+<div style="display:flex;gap:12px;">
+  <button onclick="window.location.href='dashboard.html'" style="flex:1;padding:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;">← Retour</button>
+  <button onclick="window.location.href='settings.html'" style="flex:1;padding:14px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;">⚙️ Paramètres</button>
+</div>
+</div>`;
+document.body.appendChild(overlay);
+return;
+}
+const scanned=localStorage.getItem(`scorepilot_previsions_scanned_${userId}`);
+if(!scanned&&hasED){
+document.getElementById('scanView').style.display='block';
+document.getElementById('plansView').style.display='none';
+setTimeout(runScan,500);
+}
+});
+function runScan(){
+if(scanStep>=scanSteps.length){
+setTimeout(()=>{
+document.getElementById('scanView').style.display='none';
+document.getElementById('plansView').style.display='block';
+const userId=currentUser.id||currentUser.name.replace(/\s+/g,'_').toLowerCase();
+localStorage.setItem(`scorepilot_previsions_scanned_${userId}`,'true');
+},500);
+return;
+}
+const step=scanSteps[scanStep];
+document.getElementById('scanStatus').textContent=step.status;
+document.getElementById('notesCount').textContent=step.notes;
+document.getElementById('subjectsCount').textContent=step.subjects;
+document.getElementById('progressCount').textContent=step.progress+'%';
+document.getElementById('plansCount').textContent=step.plans+'/3';
+document.getElementById('scanProgress').style.width=step.progress+'%';
+scanStep++;
+setTimeout(runScan,step.time);
+}
+function viewPlan(id){
+const plans={
+1:{name:'Équilibré',color:'#6366f1',icon:'🎯',desc:'Travail régulier sur 4 semaines pour gagner ~1.5 points.',layout:['revision','tracker','previsions','rang']},
+2:{name:'Accéléré',color:'#ef4444',icon:'⚡',desc:'Rythme intensif sur 3 semaines pour gagner ~2.5 points.',layout:['revision','previsions','tracker','priorites']},
+3:{name:'Long terme',color:'#10b981',icon:'🌱',desc:'Progression stable sur 8 semaines pour +3 points durables.',layout:['methode','revision','tracker','previsions','rang']}
+};
+const plan=plans[id];
+if(!plan)return;
+const overlay=document.createElement('div');
+overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;';
+overlay.innerHTML=`<div style="background:#111;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:36px;max-width:400px;width:100%;text-align:center;animation:_mi 0.25s ease;"><style>@keyframes _mi{from{opacity:0;transform:scale(0.94)}to{opacity:1}}</style><div style="font-size:52px;margin-bottom:14px;">${plan.icon}</div><div style="font-size:22px;font-weight:800;margin-bottom:8px;">Plan ${plan.name}</div><div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:28px;line-height:1.5;">${plan.desc}<br><br>Ton dashboard sera optimisé pour ce plan.</div><div style="display:flex;gap:12px;"><button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Annuler</button><button id="_cpb" style="flex:1;padding:14px;background:${plan.color};border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;">✨ Activer</button></div></div>`;
+document.body.appendChild(overlay);
+document.getElementById('_cpb').onclick=()=>{
+const uid=currentUser.id||(currentUser.name||'user').replace(/\s+/g,'_').toLowerCase();
+localStorage.setItem(`sp_plan_${uid}`,JSON.stringify({id,name:plan.name,color:plan.color,layout:plan.layout}));
+overlay.remove();
+const t=document.createElement('div');
+t.style.cssText='position:fixed;bottom:32px;right:32px;background:#1a1a2e;border:1px solid rgba(99,102,241,0.3);border-radius:14px;padding:14px 22px;font-size:14px;font-weight:600;z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,0.5);color:white;';
+t.textContent=`✅ Plan ${plan.name} activé !`;
+document.body.appendChild(t);
+setTimeout(()=>window.location.href='dashboard.html',1200);
+};
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScorePilot - Bienvenue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {margin: 0;padding: 0;box-sizing: border-box;}
+    
+    :root {
+      --gradient-start: #0D0F15;
+      --gradient-mid: #151B2B;
+      --gradient-end: #1A2332;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-hover: rgba(255, 255, 255, 0.08);
+      --accent-blue: #0066FF;
+      --accent-purple: #8B5CF6;
+      --accent-green: #10B981;
+      --accent-red: #EF4444;
+      --accent-yellow: #F59E0B;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(ellipse at top, var(--gradient-mid) 0%, var(--gradient-start) 50%, var(--gradient-end) 100%);
+      background-attachment: fixed;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+    }
+    
+    .onboarding-container {
+      max-width: 600px;
+      width: 100%;
+    }
+    
+    .onboarding-step {
+      display: none;
+    }
+    
+    .onboarding-step.active {
+      display: block;
+      animation: slideIn 0.4s ease;
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .onboarding-card {
+      padding: 48px;
+      text-align: center;
+    }
+    
+    .onboarding-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+    
+    .onboarding-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .onboarding-subtitle {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 40px;
+    }
+    
+    .onboarding-input {
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      margin-bottom: 16px;
+      transition: all 0.3s;
+    }
+    
+    .onboarding-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .pin-input-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+    
+    .pin-digit {
+      width: 70px;
+      height: 70px;
+      font-size: 32px;
+      font-weight: 700;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      color: white;
+      transition: all 0.3s;
+    }
+    
+    .pin-digit:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      background: rgba(255, 255, 255, 0.08);
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0, 102, 255, 0.3);
+    }
+    
+    .pin-hint {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 32px;
+    }
+    
+    .btn-primary {
+      width: 100%;
+      padding: 18px 32px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 102, 255, 0.3);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .progress-bar {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+    
+    .progress-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.3s;
+    }
+    
+    .progress-dot.active {
+      background: var(--accent-blue);
+      width: 32px;
+      border-radius: 6px;
+    }
+    
+    .error-message {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: #EF4444;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .error-message.show {
+      display: block;
+      animation: shake 0.5s;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="onboarding-container">
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+      <div class="progress-dot active" id="dot1"></div>
+      <div class="progress-dot" id="dot2"></div>
+      <div class="progress-dot" id="dot3"></div>
+    </div>
+
+    <!-- Step 1: Name -->
+    <div class="onboarding-step active glass" id="step1">
+      <div class="onboarding-card">
+        <div class="onboarding-icon">👋</div>
+        <h1 class="onboarding-title">Bienvenue sur ScorePilot</h1>
+        <p class="onboarding-subtitle">Commençons par faire connaissance</p>
+        
+        <div id="errorName" class="error-message"></div>
+        
+        <input 
+          type="text" 
+          class="onboarding-input" 
+          id="userName" 
+          placeholder="Ton prénom"
+          autocomplete="given-name"
+          maxlength="50"
+        >
+        
+        <button class="btn-primary" onclick="goToStep2()">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: PIN -->
+    <div class="onboarding-step glass" id="step2">
+      <div class="onboarding-card">
+        <div class="onboarding-icon">🔐</div>
+        <h1 class="onboarding-title">Code PIN</h1>
+        <p class="onboarding-subtitle">Choisis un code à 4 chiffres pour sécuriser ton compte</p>
+        
+        <div id="errorPin" class="error-message"></div>
+        
+        <div class="pin-input-group">
+          <input 
+            type="text" 
+            class="pin-digit" 
+            id="pin1" 
+            maxlength="1"
+            pattern="[0-9]"
+            inputmode="numeric"
+          >
+          <input 
+            type="text" 
+            class="pin-digit" 
+            id="pin2" 
+            maxlength="1"
+            pattern="[0-9]"
+            inputmode="numeric"
+          >
+          <input 
+            type="text" 
+            class="pin-digit" 
+            id="pin3" 
+            maxlength="1"
+            pattern="[0-9]"
+            inputmode="numeric"
+          >
+          <input 
+            type="text" 
+            class="pin-digit" 
+            id="pin4" 
+            maxlength="1"
+            pattern="[0-9]"
+            inputmode="numeric"
+          >
+        </div>
+        
+        <p class="pin-hint">⚠️ N'oublie pas ce code ! Tu en auras besoin pour te connecter</p>
+        
+        <button class="btn-primary" onclick="goToStep3()">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Classe/Filière -->
+    <div class="onboarding-step glass" id="step3">
+      <div class="onboarding-card">
+        <div class="onboarding-icon">🎓</div>
+        <h1 class="onboarding-title">Ta Classe</h1>
+        <p class="onboarding-subtitle">Quelle est ta classe/filière ? (optionnel)</p>
+        
+        <div id="errorClass" class="error-message"></div>
+        
+        <input 
+          type="text" 
+          class="onboarding-input" 
+          id="userClass" 
+          placeholder="Ex: Terminale S, L1 Maths, 3ème..."
+          maxlength="50"
+        >
+        
+        <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:24px;">
+          💡 Cela nous aide à personnaliser ton expérience
+        </p>
+        
+        <button class="btn-primary" onclick="completeOnboarding()">Terminer 🎉</button>
+        <br><br>
+        <button class="btn-primary" onclick="completeOnboarding()" style="background:transparent;box-shadow:none;">
+          Passer cette étape →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    let userData = {};
+
+    // Auto-focus sur le premier champ
+    document.getElementById('userName').focus();
+
+    // ========================================
+    // STEP 1: NAME
+    // ========================================
+    
+    function goToStep2() {
+      const name = document.getElementById('userName').value.trim();
+      const errorDiv = document.getElementById('errorName');
+      
+      if (!name || name.length < 2) {
+        errorDiv.textContent = '⚠️ Entre ton prénom (minimum 2 caractères)';
+        errorDiv.classList.add('show');
+        return;
+      }
+      
+      userData.name = name;
+      
+      // Transition
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.add('active');
+      document.getElementById('dot1').classList.remove('active');
+      document.getElementById('dot2').classList.add('active');
+      
+      // Focus sur premier digit du PIN
+      setTimeout(() => document.getElementById('pin1').focus(), 100);
+      currentStep = 2;
+    }
+
+    // ========================================
+    // STEP 2: PIN
+    // ========================================
+    
+    // Auto-navigation entre les digits du PIN
+    const pinInputs = ['pin1', 'pin2', 'pin3', 'pin4'];
+    
+    pinInputs.forEach((id, index) => {
+      const input = document.getElementById(id);
+      
+      input.addEventListener('input', (e) => {
+        // Accepter seulement les chiffres
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        
+        // Auto-focus sur le prochain digit
+        if (e.target.value && index < 3) {
+          document.getElementById(pinInputs[index + 1]).focus();
+        }
+      });
+      
+      input.addEventListener('keydown', (e) => {
+        // Retour arrière vers le digit précédent
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          document.getElementById(pinInputs[index - 1]).focus();
+        }
+      });
+      
+      // Prevent paste of non-numeric
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const digits = pastedText.replace(/[^0-9]/g, '').split('');
+        
+        digits.forEach((digit, i) => {
+          if (index + i < 4) {
+            document.getElementById(pinInputs[index + i]).value = digit;
+          }
+        });
+        
+        // Focus sur le dernier digit rempli
+        const lastIndex = Math.min(index + digits.length, 3);
+        document.getElementById(pinInputs[lastIndex]).focus();
+      });
+    });
+    
+    function goToStep3() {
+      const pin = pinInputs.map(id => document.getElementById(id).value).join('');
+      const errorDiv = document.getElementById('errorPin');
+      
+      if (pin.length !== 4) {
+        errorDiv.textContent = '⚠️ Le code doit contenir 4 chiffres';
+        errorDiv.classList.add('show');
+        return;
+      }
+      
+      if (!isPinUnique(pin)) {
+        errorDiv.textContent = '⚠️ Ce code est déjà utilisé. Choisis-en un autre.';
+        errorDiv.classList.add('show');
+        return;
+      }
+      
+      userData.pin = pin;
+      userData.code = pin; // Alias pour compatibilité
+      
+      // Transition
+      document.getElementById('step2').classList.remove('active');
+      document.getElementById('step3').classList.add('active');
+      document.getElementById('dot2').classList.remove('active');
+      document.getElementById('dot3').classList.add('active');
+      
+      setTimeout(() => document.getElementById('userClass').focus(), 100);
+      currentStep = 3;
+    }
+
+    // Vérifier si le PIN est unique
+    function isPinUnique(pin) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('scorepilot_user_')) {
+          const user = JSON.parse(localStorage.getItem(key));
+          if (user.pin === pin || user.code === pin) {
+            return false; // PIN déjà utilisé
+          }
+        }
+      }
+      return true;
+    }
+
+    // ========================================
+    // STEP 3: CLASSE/FILIÈRE (OPTIONAL)
+    // ========================================
+    
+    function completeOnboarding() {
+      const userClass = document.getElementById('userClass').value.trim();
+      
+      // Classe optionnelle, pas de validation nécessaire
+      if (userClass) {
+        userData.class = userClass;
+        userData.filiere = userClass; // Alias
+      }
+      
+      // Récupérer les données du signup si elles existent
+      const newUserFromSignup = sessionStorage.getItem('newUser');
+      let signupData = {};
+      if (newUserFromSignup) {
+        signupData = JSON.parse(newUserFromSignup);
+        sessionStorage.removeItem('newUser'); // Nettoyer
+      }
+      
+      // Finaliser l'utilisateur
+      const userId = userData.name.replace(/\s+/g, '_').toLowerCase();
+      
+      const finalUser = {
+        // Identité de base
+        id: signupData.id || ('user_' + Date.now()),
+        name: userData.name,
+        pin: userData.pin,
+        code: userData.pin,
+        class: userData.class || '',
+        filiere: userData.filiere || '',
+        // Données du signup (email, provider, googleId, etc.)
+        email: signupData.email || '',
+        password: signupData.password || '',
+        provider: signupData.provider || 'email',
+        googleId: signupData.googleId || '',
+        photo: signupData.photo || '',
+        createdAt: Date.now(),
+        role: signupData.role || 'student',
+        status: signupData.status || 'FREE',
+        plan: signupData.plan || 'free'
+      };
+      
+      // Sauvegarder localement
+      localStorage.setItem(`scorepilot_user_${userId}`, JSON.stringify(finalUser));
+      sessionStorage.setItem('currentUser', JSON.stringify(finalUser));
+      
+      // Synchroniser avec le Worker (si configuré) pour le panel admin
+      const SYNC_WORKER_URL = ''; // Remplace par l'URL de ton sync-worker.js
+      if (SYNC_WORKER_URL) {
+        fetch(SYNC_WORKER_URL + '/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            name: finalUser.name,
+            email: finalUser.email,
+            status: finalUser.status || 'FREE',
+            provider: finalUser.provider || 'email',
+            createdAt: finalUser.createdAt
+          })
+        }).catch(e => console.warn('Sync failed:', e));
+      }
+      
+      // Initialiser les données de rang
+      const rankData = {
+        points: 0,
+        rank: 'NOVICE I',
+        matches: [],
+        wins: 0,
+        losses: 0,
+        totalMatches: 0
+      };
+      localStorage.setItem(`sp_rank_${userId}`, JSON.stringify(rankData));
+      
+      console.log('✅ Utilisateur créé:', finalUser);
+      
+      // Animation de succès
+      document.body.style.transition = 'opacity 0.5s';
+      document.body.style.opacity = '0';
+      
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 500);
+    }
+
+    // Enter key pour passer aux étapes
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        if (currentStep === 1) goToStep2();
+        else if (currentStep === 2) goToStep3();
+        else if (currentStep === 3) completeOnboarding();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priorités Intelligentes — ScorePilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:#0a0a0a;color:white;min-height:100vh;padding:32px;-webkit-font-smoothing:antialiased;transition:opacity 0.4s;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;z-index:0;}
+.container{position:relative;z-index:1;max-width:1100px;margin:0 auto;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
+.header-left{display:flex;align-items:center;gap:20px;}
+.back{width:48px;height:48px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;transition:all 0.2s;}
+.back:hover{background:rgba(255,255,255,0.09);transform:scale(1.05);}
+.add-btn{display:flex;align-items:center;gap:8px;padding:12px 22px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.add-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,0.4);}
+
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px;}
+.stat{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;text-align:center;}
+.stat-val{font-size:22px;font-weight:900;margin-bottom:3px;}
+.stat-lbl{font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:1fr 320px;gap:20px;}
+
+/* MAIN TASKS */
+.tasks-main{}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-label{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.count-badge{padding:2px 8px;border-radius:100px;font-size:11px;font-weight:800;}
+.filter-bar{display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.03);padding:4px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);}
+.filter-btn{flex:1;padding:8px;border:none;background:transparent;color:rgba(255,255,255,0.4);font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;transition:all 0.2s;}
+.filter-btn.on{background:rgba(255,255,255,0.08);color:white;}
+
+/* TASK CARD */
+.task-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px 18px;margin-bottom:10px;transition:all 0.25s;cursor:pointer;position:relative;}
+.task-card:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.12);transform:translateY(-1px);}
+.task-card.done{opacity:0.5;}
+.task-card.overdue{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.03);}
+.task-top{display:flex;align-items:flex-start;gap:12px;}
+.task-check{width:22px;height:22px;border-radius:7px;border:2px solid rgba(255,255,255,0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;margin-top:1px;}
+.task-check.done-c{background:linear-gradient(135deg,#10b981,#059669);border-color:#10b981;}
+.task-body{flex:1;min-width:0;}
+.task-name{font-size:15px;font-weight:600;margin-bottom:4px;}
+.task-card.done .task-name{text-decoration:line-through;color:rgba(255,255,255,0.4);}
+.task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.task-prio{padding:2px 9px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:0.5px;}
+.prio-urgent{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.25);}
+.prio-high{background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.25);}
+.prio-medium{background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.25);}
+.prio-low{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);}
+.task-deadline{font-size:11px;color:rgba(255,255,255,0.35);display:flex;align-items:center;gap:4px;}
+.task-deadline.overdue-txt{color:#ef4444;}
+.task-subject{font-size:11px;padding:2px 8px;background:rgba(255,255,255,0.06);border-radius:5px;color:rgba(255,255,255,0.5);}
+.task-actions{display:flex;gap:6px;opacity:0;transition:opacity 0.2s;flex-shrink:0;}
+.task-card:hover .task-actions{opacity:1;}
+.tact{padding:5px 9px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:7px;color:rgba(255,255,255,0.5);font-size:11px;cursor:pointer;transition:all 0.15s;}
+.tact:hover{background:rgba(255,255,255,0.1);color:white;}
+.tact.del{border-color:rgba(239,68,68,0.2);color:rgba(239,68,68,0.6);}
+.tact.del:hover{background:rgba(239,68,68,0.12);color:#ef4444;}
+.task-note{font-size:12px;color:rgba(255,255,255,0.45);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);line-height:1.5;}
+
+/* AI SIDEBAR */
+.ai-sidebar{}
+.ai-card{background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:18px;padding:20px;margin-bottom:16px;}
+.ai-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.isidor-av{width:32px;height:32px;border-radius:50%;object-fit:cover;}
+.ai-msgs{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;margin-bottom:12px;}
+.ai-msg{background:rgba(255,255,255,0.04);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.8);}
+.ai-inp-row{display:flex;gap:8px;}
+.ai-inp{flex:1;padding:9px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:white;font-size:12px;outline:none;}
+.ai-inp:focus{border-color:rgba(99,102,241,0.4);}
+.ai-send{padding:9px 14px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:9px;color:white;font-size:12px;font-weight:700;cursor:pointer;}
+
+/* QUICK SUGGEST */
+.suggest-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:20px;}
+.suggest-item{padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:10px;margin-bottom:8px;font-size:12px;color:rgba(255,255,255,0.7);cursor:pointer;transition:all 0.2s;border:1px solid rgba(255,255,255,0.05);}
+.suggest-item:hover{background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.2);}
+.suggest-item .suggest-add{float:right;color:#6366f1;font-weight:700;}
+
+/* EMPTY */
+.empty-zone{text-align:center;padding:48px 20px;color:rgba(255,255,255,0.25);}
+.empty-ico{font-size:44px;margin-bottom:12px;}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.87);backdrop-filter:blur(12px);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.overlay.show{display:flex;}
+.modal{background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:30px;width:100%;max-width:500px;animation:mi 0.25s ease;}
+@keyframes mi{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:none}}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:22px;}
+.m-label{font-size:12px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.m-input,.m-select,.m-textarea{width:100%;padding:12px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:white;font-size:14px;outline:none;margin-bottom:16px;font-family:'Inter',sans-serif;}
+.m-select option{background:#111;}
+.m-textarea{resize:vertical;min-height:80px;}
+.m-input:focus,.m-select:focus,.m-textarea:focus{border-color:rgba(99,102,241,0.4);}
+.prio-selector{display:flex;gap:8px;margin-bottom:16px;}
+.prio-opt{flex:1;padding:9px;border:1.5px solid rgba(255,255,255,0.08);border-radius:9px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.2s;}
+.prio-opt.sel-urgent{border-color:#ef4444;background:rgba(239,68,68,0.12);color:#ef4444;}
+.prio-opt.sel-high{border-color:#f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;}
+.prio-opt.sel-medium{border-color:#6366f1;background:rgba(99,102,241,0.12);color:#818cf8;}
+.prio-opt.sel-low{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);}
+.m-row{display:flex;gap:10px;margin-top:6px;}
+.mbtn{flex:1;padding:13px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all 0.2s;}
+.mbtn-c{background:rgba(255,255,255,0.06);color:white;border:1px solid rgba(255,255,255,0.1);}
+.mbtn-p{background:linear-gradient(135deg,#6366f1,#818cf8);color:white;}
+.toast{position:fixed;bottom:28px;right:28px;background:#081a08;border:1px solid rgba(16,185,129,0.4);border-radius:14px;padding:13px 20px;font-size:13px;font-weight:600;z-index:1000;transform:translateY(16px);opacity:0;transition:all 0.3s;color:white;}
+.toast.show{transform:translateY(0);opacity:1;}
+/* ── CONTROLES SECTION ────────────────────────────────────────────── */
+.controles-card{background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.15);border-radius:18px;padding:18px;margin-bottom:14px;}
+.controle-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:all 0.2s;}
+.controle-item:hover{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);}
+.controle-item.urgent-soon{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04);}
+.cdate{font-size:10px;font-weight:800;padding:4px 8px;border-radius:6px;background:rgba(245,158,11,0.12);color:#f59e0b;white-space:nowrap;border:1px solid rgba(245,158,11,0.2);}
+.cdate.red{background:rgba(239,68,68,0.12);color:#ef4444;border-color:rgba(239,68,68,0.2);}
+.cinfo{flex:1;min-width:0;}
+.cname{font-size:12px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.csubj{font-size:10px;color:rgba(255,255,255,0.4);}
+.crr{font-size:11px;font-weight:800;color:#10b981;padding:3px 7px;background:rgba(16,185,129,0.08);border-radius:5px;border:1px solid rgba(16,185,129,0.15);}
+.add-controle-btn{width:100%;padding:9px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.1);border-radius:9px;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;transition:all 0.2s;margin-top:6px;}
+.add-controle-btn:hover{background:rgba(255,255,255,0.06);color:white;}
+
+/* ── REVISE QUICK CARD ────────────────────────────────────────────── */
+.revise-quick{background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.2);border-radius:14px;padding:14px;margin-bottom:14px;cursor:pointer;transition:all 0.25s;}
+.revise-quick:hover{background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.35);transform:translateY(-1px);}
+
+/* ── IA SCAN BUTTON ──────────────────────────────────────────────── */
+.ia-scan-btn{width:100%;padding:10px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.1));border:1px solid rgba(99,102,241,0.25);border-radius:10px;color:#818cf8;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:7px;}
+.ia-scan-btn:hover{background:linear-gradient(135deg,rgba(99,102,241,0.22),rgba(139,92,246,0.15));border-color:rgba(99,102,241,0.4);}
+.ia-scan-btn.scanning{opacity:0.6;cursor:not-allowed;}
+
+/* ── PLAN CHIP ────────────────────────────────────────────────────── */
+.plan-chips{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.plan-chip{padding:5px 10px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);transition:all 0.15s;}
+.plan-chip.on{background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.35);color:#818cf8;}
+
+/* ── RR GAINS CHIP ────────────────────────────────────────────────── */
+.rr-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:5px;font-size:10px;font-weight:700;color:#10b981;}
+
+/* ── MODAL CONTROLE ───────────────────────────────────────────────── */
+.mini-input{width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:white;font-size:13px;outline:none;margin-bottom:13px;font-family:'Inter',sans-serif;}
+.mini-input:focus{border-color:rgba(99,102,241,0.4);}
+
+/* ── REVISE MODAL ─────────────────────────────────────────────────── */
+.revise-modal{max-width:680px;width:100%;}
+.quiz-opt{padding:12px 16px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.18s;margin-bottom:8px;}
+.quiz-opt:hover{background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3);}
+.quiz-opt.correct{background:rgba(16,185,129,0.15);border-color:#10b981;color:#6ee7b7;}
+.quiz-opt.wrong{background:rgba(239,68,68,0.1);border-color:#ef4444;color:#fca5a5;}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <div class="back" onclick="fadeBack()">←</div>
+      <div>
+        <div style="font-size:28px;font-weight:900;">⚡ Priorités Intelligentes</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.4);">Organisé par Isidor IA selon tes urgences réelles</div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="openModal('taskModal')">+ Nouvelle tâche</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-val" id="sTotal">0</div>
+      <div class="stat-lbl">Total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="sUrgent" style="color:#ef4444;">0</div>
+      <div class="stat-lbl">Urgent</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="sDone" style="color:#10b981;">0</div>
+      <div class="stat-lbl">Terminées</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="sOverdue" style="color:#f59e0b;">0</div>
+      <div class="stat-lbl">En retard</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="sRate" style="color:#6366f1;">0%</div>
+      <div class="stat-lbl">Complétion</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- TÂCHES -->
+    <div class="tasks-main">
+      <div class="filter-bar">
+        <button class="filter-btn on" onclick="setFilter('all',this)">Toutes</button>
+        <button class="filter-btn" onclick="setFilter('urgent',this)">🔴 Urgent</button>
+        <button class="filter-btn" onclick="setFilter('high',this)">🟡 Haute</button>
+        <button class="filter-btn" onclick="setFilter('medium',this)">🔵 Moyenne</button>
+        <button class="filter-btn" onclick="setFilter('todo',this)">À faire</button>
+        <button class="filter-btn" onclick="setFilter('done',this)">✓ Faites</button>
+      </div>
+      <div id="tasksList"></div>
+    </div>
+
+    <!-- SIDEBAR IA -->
+    <div class="ai-sidebar">
+      <div class="ai-card">
+        <div class="ai-header">
+          <img src="isidor-avatar-transparent.png" class="isidor-av" onerror="this.style.display='none'">
+          <div>
+            <div style="font-size:13px;font-weight:700;">Isidor</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);">Conseiller priorités</div>
+          </div>
+        </div>
+        <div class="ai-msgs" id="aiMsgs">
+          <div class="ai-msg">💡 Je peux t'aider à prioriser tes tâches selon tes révisions, tes délais et ta charge de travail. Demande-moi !</div>
+        </div>
+        <div class="ai-inp-row">
+          <input class="ai-inp" id="aiInput" placeholder="Ex: Que faire en premier ?" onkeydown="if(event.key==='Enter')askIsidor()">
+          <button class="ai-send" onclick="askIsidor()">▶</button>
+        </div>
+      </div>
+
+      <!-- PLAN PRÉVISIONNEL -->
+      <div class="suggest-card" style="margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">📅 Plan actif</div>
+        <div class="plan-chips">
+          <div class="plan-chip on" onclick="setPlan('equilibre',this)" data-plan="equilibre">⚖️ Équilibré</div>
+          <div class="plan-chip" onclick="setPlan('intensif',this)" data-plan="intensif">⚡ Intensif</div>
+          <div class="plan-chip" onclick="setPlan('long',this)" data-plan="long">🐢 Long terme</div>
+        </div>
+        <div id="planDesc" style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;">Révisions quotidiennes équilibrées selon tes points faibles. Idéal pour progresser sans te surcharger.</div>
+      </div>
+
+      <!-- CONTRÔLES À VENIR -->
+      <div class="controles-card">
+        <div style="font-size:12px;font-weight:700;color:rgba(245,158,11,0.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">📝 Contrôles à venir</div>
+        <div id="controlesList">
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;padding:10px;">Aucun contrôle planifié</div>
+        </div>
+        <button class="add-controle-btn" onclick="openControleModal()">+ Ajouter un contrôle</button>
+      </div>
+
+      <!-- RÉVISION RAPIDE -->
+      <div class="revise-quick" onclick="openReviseModal()">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:linear-gradient(135deg,#8B5CF6,#6366f1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⚡</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:2px;">Révision instantanée</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.45);">Quiz IA sur ta prochaine priorité</div>
+          </div>
+          <div style="margin-left:auto;font-size:10px;color:rgba(139,92,246,0.8);font-weight:700;">+RR 🏆</div>
+        </div>
+      </div>
+
+      <!-- SUGGESTIONS IA -->
+      <div class="suggest-card">
+        <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🎯 Meilleures priorités IA</div>
+        <div id="suggestList">
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;padding:12px;">En attente d'analyse...</div>
+        </div>
+        <button class="ia-scan-btn" id="scanBtn" onclick="refreshSuggestions()">
+          <span>🤖</span> Scanner avec Isidor
+        </button>
+      </div>
+
+      <!-- CHAT ISIDOR -->
+      <div class="ai-card" style="margin-top:14px;">
+        <div class="ai-header">
+          <img src="isidor-avatar-transparent.png" class="isidor-av" onerror="this.style.display='none'">
+          <div><div style="font-size:12px;font-weight:700;">Isidor</div><div style="font-size:10px;color:rgba(255,255,255,0.4);">Conseiller priorités</div></div>
+        </div>
+        <div class="ai-msgs" id="aiMsgs">
+          <div class="ai-msg">💡 Dis-moi ce que tu veux prioriser et je t'aide à organiser ton plan de révision !</div>
+        </div>
+        <div class="ai-inp-row">
+          <input class="ai-inp" id="aiInput" placeholder="Ex: Que faire en premier ?" onkeydown="if(event.key==='Enter')askIsidor()">
+          <button class="ai-send" onclick="askIsidor()">▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTRÔLE -->
+<div class="overlay" id="controleModal" onclick="closeIfBg(event,'controleModal')">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">📝 Ajouter un contrôle</div>
+    <div class="m-label">Matière</div>
+    <input class="mini-input" id="cSubject" placeholder="Ex: Mathématiques, Physique...">
+    <div class="m-label">Chapitre / Thème</div>
+    <input class="mini-input" id="cTheme" placeholder="Ex: Dérivées, Thermodynamique...">
+    <div class="m-label">Date du contrôle</div>
+    <input class="mini-input" id="cDate" type="date">
+    <div class="m-label">Coefficient</div>
+    <input class="mini-input" id="cCoeff" type="number" min="1" max="10" placeholder="Ex: 3">
+    <div class="m-row">
+      <button class="mbtn mbtn-c" onclick="closeModal('controleModal')">Annuler</button>
+      <button class="mbtn mbtn-p" onclick="saveControle()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RÉVISION RAPIDE -->
+<div class="overlay" id="reviseModal" onclick="closeIfBg(event,'reviseModal')">
+  <div class="modal revise-modal">
+    <div class="modal-title" id="reviseTitle">⚡ Révision instantanée</div>
+    <div id="reviseContent">
+      <div style="text-align:center;padding:30px;color:rgba(255,255,255,0.4);">Chargement du quiz IA...</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TÂCHE -->
+<div class="overlay" id="taskModal" onclick="closeIfBg(event,'taskModal')">
+  <div class="modal">
+    <div class="modal-title" id="modalTaskTitle">✨ Nouvelle tâche</div>
+
+    <div class="m-label">Nom de la tâche</div>
+    <input class="m-input" id="tName" placeholder="Ex: Réviser le chapitre 4 de Maths">
+
+    <div class="m-label">Matière (optionnel)</div>
+    <input class="m-input" id="tSubject" placeholder="Ex: Mathématiques, Histoire...">
+
+    <div class="m-label">Priorité</div>
+    <div class="prio-selector">
+      <div class="prio-opt" id="pUrgent" onclick="selectPrio('urgent')">🔴 Urgent</div>
+      <div class="prio-opt" id="pHigh" onclick="selectPrio('high')">🟡 Haute</div>
+      <div class="prio-opt" id="pMedium" onclick="selectPrio('medium')">🔵 Moyenne</div>
+      <div class="prio-opt" id="pLow" onclick="selectPrio('low')">⬜ Faible</div>
+    </div>
+
+    <div class="m-label">Échéance</div>
+    <input class="m-input" id="tDeadline" type="date">
+
+    <div class="m-label">Notes (optionnel)</div>
+    <textarea class="m-textarea" id="tNote" placeholder="Détails, ressources, rappels..."></textarea>
+
+    <div class="m-row">
+      <button class="mbtn mbtn-c" onclick="closeModal('taskModal')">Annuler</button>
+      <button class="mbtn mbtn-p" onclick="saveTask()">Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_KEY = localStorage.getItem('sp_openai_key') || '';
+const API_URL = 'https://api.openai.com/v1/chat/completions';
+
+const PRIO_ORDER = { urgent:0, high:1, medium:2, low:3 };
+const PRIO_LABELS = { urgent:'Urgent', high:'Haute', medium:'Moyenne', low:'Faible' };
+
+let tasks = [];
+let userId = '';
+let currentUser = {};
+let editingId = null;
+let currentFilter = 'all';
+let selectedPrio = 'medium';
+
+const DEFAULT_TASKS = [
+  { id:1, name:'Réviser pour le prochain contrôle', subject:'Mathématiques', prio:'urgent', done:false, deadline:new Date(Date.now()+2*86400000).toISOString().split('T')[0], note:'Chapitres 3 et 4', created:Date.now() },
+  { id:2, name:'Finir le devoir de Français', subject:'Français', prio:'high', done:false, deadline:new Date(Date.now()+4*86400000).toISOString().split('T')[0], note:'', created:Date.now() },
+  { id:3, name:'Lire le cours d\'Histoire', subject:'Histoire', prio:'medium', done:false, deadline:'', note:'', created:Date.now() },
+];
+
+document.body.style.opacity = '0';
+window.addEventListener('load', () => {
+  currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+  if (!currentUser.name) { window.location.href = 'login-revolut.html'; return; }
+  userId = currentUser.id || currentUser.name.replace(/\s+/g,'_').toLowerCase();
+
+  const saved = localStorage.getItem(`sp_tasks_${userId}`);
+  tasks = saved ? JSON.parse(saved) : DEFAULT_TASKS.map(t => ({...t}));
+  if (!saved) saveTasks();
+
+  document.getElementById('tDeadline').min = new Date().toISOString().split('T')[0];
+  selectPrio('medium');
+  render();
+  setTimeout(() => document.body.style.opacity = '1', 50);
+  loadControles();
+  activePlan = localStorage.getItem(`sp_plan_${userId}`) || 'equilibre';
+  const savedPlan = document.querySelector(`[data-plan='${activePlan}']`);
+  if (savedPlan) { document.querySelectorAll('.plan-chip').forEach(c=>c.classList.remove('on')); savedPlan.classList.add('on'); document.getElementById('planDesc').textContent = PLAN_DESCS[activePlan]||''; }
+  setTimeout(refreshSuggestions, 1400);
+});
+
+function saveTasks() { localStorage.setItem(`sp_tasks_${userId}`, JSON.stringify(tasks)); }
+
+function getFiltered() {
+  return tasks.filter(t => {
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'done') return t.done;
+    if (currentFilter === 'todo') return !t.done;
+    return t.prio === currentFilter && !t.done;
+  }).sort((a,b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    const pd = PRIO_ORDER[a.prio] - PRIO_ORDER[b.prio];
+    if (pd !== 0) return pd;
+    if (a.deadline && b.deadline) return new Date(a.deadline) - new Date(b.deadline);
+    if (a.deadline) return -1;
+    if (b.deadline) return 1;
+    return b.created - a.created;
+  });
+}
+
+function isOverdue(t) {
+  return !t.done && t.deadline && new Date(t.deadline) < new Date(new Date().toDateString());
+}
+
+function formatDeadline(d) {
+  if (!d) return '';
+  const date = new Date(d);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((date - today) / 86400000);
+  if (diff < 0) return `⚠️ ${Math.abs(diff)}j de retard`;
+  if (diff === 0) return `⏰ Aujourd'hui`;
+  if (diff === 1) return `⌛ Demain`;
+  return `📅 ${date.toLocaleDateString('fr-FR')}`;
+}
+
+function render() {
+  const filtered = getFiltered();
+  const list = document.getElementById('tasksList');
+
+  // Stats
+  const done = tasks.filter(t=>t.done).length;
+  const urgent = tasks.filter(t=>t.prio==='urgent'&&!t.done).length;
+  const overdue = tasks.filter(t=>isOverdue(t)).length;
+  document.getElementById('sTotal').textContent = tasks.length;
+  document.getElementById('sDone').textContent = done;
+  document.getElementById('sUrgent').textContent = urgent;
+  document.getElementById('sOverdue').textContent = overdue;
+  document.getElementById('sRate').textContent = tasks.length ? Math.round((done/tasks.length)*100)+'%' : '0%';
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty-zone"><div class="empty-ico">✅</div><div>Aucune tâche ici</div></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => {
+    const over = isOverdue(t);
+    const dl = formatDeadline(t.deadline);
+    return `<div class="task-card ${t.done?'done':''} ${over?'overdue':''}" onclick="openEdit(${t.id})">
+      <div class="task-top">
+        <div class="task-check ${t.done?'done-c':''}" onclick="event.stopPropagation();toggleDone(${t.id})">${t.done?'✓':''}</div>
+        <div class="task-body">
+          <div class="task-name">${esc(t.name)}</div>
+          <div class="task-meta">
+            <span class="task-prio prio-${t.prio}">${PRIO_LABELS[t.prio]}</span>
+            ${t.subject ? `<span class="task-subject">${esc(t.subject)}</span>` : ''}
+            ${dl ? `<span class="task-deadline ${over?'overdue-txt':''}">${dl}</span>` : ''}
+          </div>
+          ${t.note ? `<div class="task-note">${esc(t.note)}</div>` : ''}
+        </div>
+        <div class="task-actions" onclick="event.stopPropagation()">
+          <button class="tact" onclick="openEdit(${t.id})">✏️</button>
+          <button class="tact del" onclick="deleteTask(${t.id})">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  render();
+}
+
+function toggleDone(id) {
+  const t = tasks.find(x => x.id === id);
+  if (t) { t.done = !t.done; saveTasks(); render(); showToast(t.done ? '✅ Tâche terminée !' : 'Tâche réouverte'); }
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks(); render();
+  showToast('🗑️ Supprimée');
+}
+
+// MODAL
+function openModal(id) {
+  editingId = null;
+  document.getElementById('modalTaskTitle').textContent = '✨ Nouvelle tâche';
+  document.getElementById('tName').value = '';
+  document.getElementById('tSubject').value = '';
+  document.getElementById('tDeadline').value = '';
+  document.getElementById('tNote').value = '';
+  selectPrio('medium');
+  document.getElementById(id).classList.add('show');
+  setTimeout(() => document.getElementById('tName').focus(), 50);
+}
+
+function openEdit(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('modalTaskTitle').textContent = '✏️ Modifier la tâche';
+  document.getElementById('tName').value = t.name;
+  document.getElementById('tSubject').value = t.subject || '';
+  document.getElementById('tDeadline').value = t.deadline || '';
+  document.getElementById('tNote').value = t.note || '';
+  selectPrio(t.prio);
+  document.getElementById('taskModal').classList.add('show');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); editingId = null; }
+function closeIfBg(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+
+function selectPrio(p) {
+  selectedPrio = p;
+  ['urgent','high','medium','low'].forEach(x => {
+    const el = document.getElementById('p' + x.charAt(0).toUpperCase() + x.slice(1));
+    el.className = 'prio-opt' + (x === p ? ` sel-${x}` : '');
+  });
+}
+
+function saveTask() {
+  const name = document.getElementById('tName').value.trim();
+  if (!name) { showToast('Donne un nom à la tâche'); return; }
+  if (editingId) {
+    const t = tasks.find(x => x.id === editingId);
+    if (t) { t.name = name; t.subject = document.getElementById('tSubject').value.trim(); t.prio = selectedPrio; t.deadline = document.getElementById('tDeadline').value; t.note = document.getElementById('tNote').value.trim(); }
+  } else {
+    tasks.push({ id: Date.now(), name, subject: document.getElementById('tSubject').value.trim(), prio: selectedPrio, deadline: document.getElementById('tDeadline').value, note: document.getElementById('tNote').value.trim(), done: false, created: Date.now() });
+  }
+  saveTasks();
+  closeModal('taskModal');
+  render();
+  showToast(editingId ? '✅ Modifiée !' : '✅ Tâche créée !');
+}
+
+// ─── ISIDOR ──────────────────────────────────────────────────────────────────
+async function askIsidor() {
+  const inp = document.getElementById('aiInput');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+
+  appendMsg(msg, true);
+  const btn = document.querySelector('.ai-send');
+  btn.disabled = true; btn.textContent = '...';
+
+  const context = `Tu es Isidor, assistant IA de ScorePilot. L'élève a ${tasks.filter(t=>!t.done).length} tâches à faire dont ${tasks.filter(t=>t.prio==='urgent'&&!t.done).length} urgentes. Réponds en 2-3 phrases max, sois direct et actionnable.`;
+  const tasksStr = tasks.filter(t=>!t.done).slice(0,5).map(t=>`- ${t.name} (${PRIO_LABELS[t.prio]}${t.deadline?', échéance '+t.deadline:''})`).join('\n');
+
+  try {
+    const res = await fetch(API_URL, {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${API_KEY}`},
+      body: JSON.stringify({ model:'gpt-4o-mini', messages:[
+        {role:'system',content:context+'\nTâches actuelles:\n'+tasksStr},
+        {role:'user',content:msg}
+      ], max_tokens:150 })
+    });
+    const data = await res.json();
+    appendMsg(data.choices?.[0]?.message?.content || 'Erreur de réponse.', false);
+  } catch(e) {
+    appendMsg('Connexion IA indisponible. Vérifie ta clé OpenAI dans les Paramètres.', false);
+  }
+  btn.disabled = false; btn.textContent = '▶';
+}
+
+function appendMsg(text, isUser) {
+  const el = document.createElement('div');
+  el.className = 'ai-msg' + (isUser ? ' user' : '');
+  el.textContent = text;
+  document.getElementById('aiMsgs').appendChild(el);
+  document.getElementById('aiMsgs').scrollTop = 9999;
+}
+
+async function refreshSuggestions() {
+  const el = document.getElementById('suggestList');
+  el.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;padding:12px;">Analyse en cours...</div>';
+
+  const pending = tasks.filter(t=>!t.done);
+  if (!pending.length) {
+    el.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;padding:12px;">Toutes les tâches sont terminées ! 🎉</div>';
+    return;
+  }
+
+  if (!API_KEY) {
+    // Suggestions locales sans IA
+    const urgent = pending.filter(t=>t.prio==='urgent');
+    const overdue = pending.filter(t=>isOverdue(t));
+    const suggestions = [
+      ...overdue.slice(0,2).map(t=>`⚠️ En retard : "${t.name}"`),
+      ...urgent.slice(0,2).map(t=>`🔴 Urgent : "${t.name}"`),
+    ].slice(0,4);
+    if (suggestions.length) {
+      el.innerHTML = suggestions.map(s => `<div class="suggest-item">${esc(s)}</div>`).join('');
+    } else {
+      el.innerHTML = `<div class="suggest-item">💡 Configure ta clé OpenAI pour des suggestions personnalisées par IA</div>`;
+    }
+    return;
+  }
+
+  try {
+    const tasksStr = pending.slice(0,8).map(t=>`- ${t.name} (${PRIO_LABELS[t.prio]}${t.deadline?', échéance '+t.deadline:''}${isOverdue(t)?' EN RETARD':''})`).join('\n');
+    const res = await fetch(API_URL, {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${API_KEY}`},
+      body: JSON.stringify({ model:'gpt-4o-mini', messages:[
+        {role:'system', content:'Tu es Isidor, assistant scolaire IA. Analyse ces tâches et donne 3 suggestions courtes de priorisation (max 60 chars chacune). Format: JSON array de strings. Ex: ["Commence par X car...", "Fais Y avant Z"]. Réponds UNIQUEMENT en JSON.'},
+        {role:'user', content:'Mes tâches:\n'+tasksStr}
+      ], max_tokens:200 })
+    });
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content || '[]';
+    const suggestions = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    el.innerHTML = suggestions.slice(0,4).map(s => `<div class="suggest-item">${esc(s)}</div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;padding:12px;">Erreur IA</div>';
+  }
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+function fadeBack() { document.body.style.opacity='0'; setTimeout(()=>window.location.href='dashboard.html',400); }
+
+// ─── CONTRÔLES ────────────────────────────────────────────────────────────────
+let controles = [];
+let activePlan = 'equilibre';
+
+function loadControles() {
+  const saved = localStorage.getItem(`sp_controles_${userId}`);
+  controles = saved ? JSON.parse(saved) : [];
+  renderControles();
+}
+function saveControles() { localStorage.setItem(`sp_controles_${userId}`, JSON.stringify(controles)); }
+
+function renderControles() {
+  const list = document.getElementById('controlesList');
+  const upcoming = controles.filter(c => new Date(c.date) >= new Date(new Date().toDateString()))
+    .sort((a,b) => new Date(a.date)-new Date(b.date)).slice(0,4);
+  if (!upcoming.length) {
+    list.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;padding:10px;">Aucun contrôle planifié</div>';
+    return;
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  list.innerHTML = upcoming.map(c => {
+    const d = new Date(c.date); const diff = Math.round((d-today)/86400000);
+    const urgent = diff <= 3;
+    const label = diff === 0 ? "Aujourd'hui !" : diff === 1 ? 'Demain' : `J-${diff}`;
+    const rrGain = Math.round((c.coeff||1) * (urgent ? 80 : 50));
+    return `<div class="controle-item ${urgent?'urgent-soon':''}" onclick="startReviseControle('${c.id}')">
+      <div class="cdate ${urgent?'red':''}">${label}</div>
+      <div class="cinfo"><div class="cname">${esc(c.subject)}</div><div class="csubj">${esc(c.theme||'')}</div></div>
+      <div class="crr">+${rrGain} RR</div>
+    </div>`;
+  }).join('');
+  // Auto-créer des tâches de révision si contrôles urgents
+  autoCreateRevisionTasks();
+}
+
+function openControleModal() {
+  document.getElementById('cDate').min = new Date().toISOString().split('T')[0];
+  openModal('controleModal');
+}
+
+function saveControle() {
+  const subject = document.getElementById('cSubject').value.trim();
+  const date = document.getElementById('cDate').value;
+  if (!subject || !date) { showToast('Remplis la matière et la date'); return; }
+  const c = {
+    id: Date.now(),
+    subject,
+    theme: document.getElementById('cTheme').value.trim(),
+    date,
+    coeff: parseInt(document.getElementById('cCoeff').value||1)
+  };
+  controles.push(c);
+  saveControles();
+  renderControles();
+  closeModal('controleModal');
+  showToast('📝 Contrôle ajouté !');
+  // Auto-create task
+  const diff = Math.round((new Date(date)-new Date())/86400000);
+  const prio = diff <= 2 ? 'urgent' : diff <= 5 ? 'high' : 'medium';
+  tasks.push({id:Date.now()+1,name:`Réviser ${subject}${c.theme?' - '+c.theme:''}`,subject,prio,done:false,deadline:date,note:`Contrôle prévu le ${date}. Coeff ${c.coeff}.`,created:Date.now(),controleId:c.id,rrReward:Math.round((c.coeff||1)*60)});
+  saveTasks(); render();
+  showToast('✅ Tâche de révision créée automatiquement !');
+}
+
+function autoCreateRevisionTasks() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  controles.forEach(c => {
+    const diff = Math.round((new Date(c.date)-today)/86400000);
+    if (diff >= 0 && diff <= 5) {
+      const alreadyExists = tasks.some(t => t.controleId === c.id);
+      if (!alreadyExists) {
+        const prio = diff <= 2 ? 'urgent' : 'high';
+        tasks.push({id:Date.now()+Math.random(),name:`Réviser ${c.subject}${c.theme?' - '+c.theme:''}`,subject:c.subject,prio,done:false,deadline:c.date,note:`Contrôle dans ${diff} jour(s). Coeff ${c.coeff}.`,created:Date.now(),controleId:c.id,rrReward:Math.round((c.coeff||1)*60)});
+        saveTasks(); render();
+      }
+    }
+  });
+}
+
+// ─── RÉVISION INSTANTANÉE ─────────────────────────────────────────────────────
+async function openReviseModal() {
+  openModal('reviseModal');
+  const topTask = tasks.filter(t=>!t.done).sort((a,b)=>{const p={urgent:0,high:1,medium:2,low:3};return p[a.prio]-p[b.prio];})[0];
+  if (!topTask) {
+    document.getElementById('reviseContent').innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.4);">Aucune tâche à réviser 🎉</div>';
+    return;
+  }
+  document.getElementById('reviseTitle').textContent = `⚡ Révision : ${topTask.subject||topTask.name}`;
+  document.getElementById('reviseContent').innerHTML = `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);"><div style="font-size:24px;margin-bottom:8px;">🤖</div>Isidor génère ton quiz...</div>`;
+
+  const key = localStorage.getItem('sp_openai_key') || API_KEY;
+  if (!key) {
+    document.getElementById('reviseContent').innerHTML = genLocalQuiz(topTask);
+    return;
+  }
+  try {
+    const res = await fetch(API_URL, {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body: JSON.stringify({model:'gpt-4o-mini',messages:[
+        {role:'system',content:'Tu es Isidor, IA scolaire. Génère un quiz de révision en JSON UNIQUEMENT. Format: {"question":"...","options":["a","b","c","d"],"correct":0,"explication":"...","conseil":"..."} Le correct est l'index 0-3. Réponds UNIQUEMENT en JSON valide, sans balises ni texte.'},
+        {role:'user',content:`Génère une question de révision pour: ${topTask.name} (${topTask.subject||'général'}). Note: ${topTask.note||'aucune'}`}
+      ],max_tokens:400})
+    });
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content || '{}';
+    const quiz = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    document.getElementById('reviseContent').innerHTML = renderQuiz(quiz, topTask);
+  } catch(e) {
+    document.getElementById('reviseContent').innerHTML = genLocalQuiz(topTask);
+  }
+}
+
+function renderQuiz(quiz, task) {
+  return `
+    <div style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:16px;padding:20px;margin-bottom:14px;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:16px;line-height:1.4;">${esc(quiz.question||'Question de révision')}</div>
+      <div id="quizOpts">${(quiz.options||[]).map((o,i)=>`<div class="quiz-opt" onclick="checkAnswer(${i},${quiz.correct||0},'${esc(quiz.explication||'').replace(/'/g,"\'")}','${esc(quiz.conseil||'').replace(/'/g,"\'")}','${task.id}')">${esc(o)}</div>`).join('')}</div>
+      <div id="quizFeedback" style="display:none;margin-top:12px;"></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="openReviseModal()" style="flex:1;padding:12px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);border-radius:11px;color:#818cf8;font-size:13px;font-weight:700;cursor:pointer;">🔄 Nouvelle question</button>
+      <button onclick="closeModal('reviseModal')" style="padding:12px 18px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:11px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;">Fermer</button>
+    </div>`;
+}
+
+function checkAnswer(selected, correct, explication, conseil, taskId) {
+  const opts = document.querySelectorAll('#quizOpts .quiz-opt');
+  opts.forEach((o,i) => {
+    o.onclick = null; o.style.cursor='default';
+    if (i===correct) o.classList.add('correct');
+    else if (i===selected && selected!==correct) o.classList.add('wrong');
+  });
+  const won = selected===correct;
+  const rrGain = won ? 25 : 5;
+  // Award RR
+  const uid = userId;
+  const pts = parseInt(localStorage.getItem(`sp_points_${uid}`)||0) + rrGain;
+  localStorage.setItem(`sp_points_${uid}`, pts);
+  localStorage.setItem(`scorepilot_points_${uid}`, pts);
+  document.getElementById('quizFeedback').style.display='block';
+  document.getElementById('quizFeedback').innerHTML = `
+    <div style="padding:12px;background:${won?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.08)'};border:1px solid ${won?'rgba(16,185,129,0.25)':'rgba(239,68,68,0.2)'};border-radius:10px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:${won?'#10b981':'#fca5a5'};">${won?'✅ Bonne réponse !':'❌ Raté'} <span class="rr-chip">+${rrGain} RR 🏆</span></div>
+      ${explication?`<div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:4px;">💡 ${explication}</div>`:''}
+      ${conseil?`<div style="font-size:11px;color:rgba(255,255,255,0.4);">📌 ${conseil}</div>`:''}
+    </div>`;
+}
+
+function genLocalQuiz(task) {
+  return `<div style="padding:20px;text-align:center;">
+    <div style="font-size:40px;margin-bottom:12px;">📚</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:8px;">Révise maintenant : ${esc(task.name)}</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Configure ta clé OpenAI dans les Paramètres pour des quiz générés par IA.</div>
+    <button onclick="closeModal('reviseModal');window.location.href='revision-ultimate.html'" style="padding:14px 28px;background:linear-gradient(135deg,#8B5CF6,#6366f1);border:none;border-radius:12px;color:white;font-weight:700;cursor:pointer;">🚀 Lancer une session complète</button>
+  </div>`;
+}
+
+function startReviseControle(id) {
+  const c = controles.find(x=>x.id==id);
+  if (!c) return;
+  // Fake topTask from controle
+  const fakeTask = {id:c.id,name:`Contrôle ${c.subject}`,subject:c.subject,note:c.theme,prio:'urgent'};
+  openModal('reviseModal');
+  document.getElementById('reviseTitle').textContent = `⚡ Révision : ${c.subject}`;
+  document.getElementById('reviseContent').innerHTML = `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);">🤖 Génération du quiz...</div>`;
+  setTimeout(async () => {
+    const key = localStorage.getItem('sp_openai_key') || API_KEY;
+    if (!key) { document.getElementById('reviseContent').innerHTML = genLocalQuiz(fakeTask); return; }
+    try {
+      const res = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+        body:JSON.stringify({model:'gpt-4o-mini',messages:[
+          {role:'system',content:'Tu es Isidor. Génère un quiz de révision. Format JSON: {"question":"...","options":["a","b","c","d"],"correct":0,"explication":"...","conseil":"..."}. JSON valide uniquement.'},
+          {role:'user',content:`Génère une question sur: ${c.subject} - ${c.theme||'cours général'}`}
+        ],max_tokens:400})});
+      const data = await res.json();
+      const quiz = JSON.parse(data.choices?.[0]?.message?.content.replace(/```json|```/g,'').trim()||'{}');
+      document.getElementById('reviseContent').innerHTML = renderQuiz(quiz, fakeTask);
+    } catch(e) { document.getElementById('reviseContent').innerHTML = genLocalQuiz(fakeTask); }
+  }, 100);
+}
+
+// ─── PLAN PRÉVISIONNEL ────────────────────────────────────────────────────────
+const PLAN_DESCS = {
+  equilibre: 'Révisions quotidiennes équilibrées selon tes points faibles. Idéal pour progresser sans te surcharger.',
+  intensif: 'Sessions longues et fréquentes. Maximise tes gains de moyenne rapidement avant des examens importants.',
+  long: 'Répétition espacée sur plusieurs semaines. Parfait pour consolider les connaissances sur la durée.'
+};
+function setPlan(plan, el) {
+  activePlan = plan;
+  document.querySelectorAll('.plan-chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('planDesc').textContent = PLAN_DESCS[plan];
+  localStorage.setItem(`sp_plan_${userId}`, plan);
+  // Re-suggest with new plan context
+  refreshSuggestions();
+}
+
+// ─── OVERRIDE refreshSuggestions with plan context ─────────────────────────
+async function refreshSuggestions() {
+  const btn = document.getElementById('scanBtn');
+  if (btn) { btn.classList.add('scanning'); btn.innerHTML='<span>⏳</span> Analyse en cours...'; }
+  const el = document.getElementById('suggestList');
+  el.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;padding:12px;">🤖 Isidor analyse...</div>';
+
+  const pending = tasks.filter(t=>!t.done);
+  const controlesSoon = controles.filter(c=>{const d=Math.round((new Date(c.date)-new Date())/86400000);return d>=0&&d<=14;});
+
+  if (!pending.length && !controlesSoon.length) {
+    el.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;padding:12px;">Toutes les tâches sont terminées ! 🎉</div>';
+    if (btn) { btn.classList.remove('scanning'); btn.innerHTML='<span>🤖</span> Scanner avec Isidor'; }
+    return;
+  }
+
+  const key = localStorage.getItem('sp_openai_key') || API_KEY;
+  if (!key) {
+    // Suggestions locales intelligentes
+    const urgent = pending.filter(t=>t.prio==='urgent');
+    const overdue = pending.filter(t=>isOverdue(t));
+    const controleUrgent = controlesSoon.filter(c=>Math.round((new Date(c.date)-new Date())/86400000)<=3);
+    const sug = [
+      ...controleUrgent.slice(0,2).map(c=>`🔴 Contrôle ${c.subject} dans ${Math.round((new Date(c.date)-new Date())/86400000)}j — priorité absolue`),
+      ...overdue.slice(0,2).map(t=>`⚠️ En retard : "${t.name}" — règle ça maintenant`),
+      ...urgent.filter(t=>!t.controleId).slice(0,2).map(t=>`🔴 Urgent : "${t.name}"`)
+    ].slice(0,4);
+    el.innerHTML = sug.length ? sug.map(s=>`<div class="suggest-item" style="font-size:11px;">${esc(s)}</div>`).join('') : 
+      `<div class="suggest-item" style="font-size:11px;">💡 Configure ta clé OpenAI pour des suggestions IA personnalisées</div>`;
+    if (btn) { btn.classList.remove('scanning'); btn.innerHTML='<span>🤖</span> Scanner avec Isidor'; }
+    return;
+  }
+
+  try {
+    const tasksStr = pending.slice(0,6).map(t=>`- ${t.name} (${PRIO_LABELS[t.prio]}${t.deadline?', J-'+Math.max(0,Math.round((new Date(t.deadline)-new Date())/86400000)):''}${isOverdue(t)?' EN RETARD':''})`).join('
+');
+    const controlesStr = controlesSoon.slice(0,4).map(c=>`- ${c.subject}${c.theme?' ('+c.theme+')':''} dans ${Math.round((new Date(c.date)-new Date())/86400000)}j (coeff ${c.coeff||1})`).join('
+');
+    const res = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body:JSON.stringify({model:'gpt-4o-mini',messages:[
+        {role:'system',content:`Tu es Isidor, IA scolaire de ScorePilot. Plan actif: ${activePlan}. Analyse les tâches et contrôles à venir, puis donne 3-4 recommandations courtes et actionnables de priorisation (max 80 chars chacune). Inclus les gains RR (ex: "+50 RR si fini aujourd'hui"). Format: JSON array de strings. Réponds UNIQUEMENT en JSON valide.`},
+        {role:'user',content:`Tâches:
+${tasksStr||'Aucune'}
+
+Contrôles à venir:
+${controlesStr||'Aucun'}`}
+      ],max_tokens:300})});
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content||'[]';
+    const suggestions = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    el.innerHTML = suggestions.slice(0,4).map((s,i)=>`<div class="suggest-item" style="font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:8px;"><span>${esc(s)}</span><span class="rr-chip">${i===0?'+60':i===1?'+40':'+25'} RR</span></div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;padding:10px;">Erreur IA — clé invalide ?</div>';
+  }
+  if (btn) { btn.classList.remove('scanning'); btn.innerHTML='<span>🤖</span> Scanner avec Isidor'; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Netlify Redirects Configuration for ScorePilot
+
+# Redirect root to login page
+/    /login-revolut.html   200
+
+# Ne PAS rediriger toutes les 404 vers login
+# Cela cause une boucle infinie
+# La ligne ci-dessous est commentée
+# /*   /login-revolut.html   404

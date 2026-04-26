@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Résultats & Insights - ScorePilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background:#0a0a0a;color:white;min-height:100vh;padding:32px;}
+.container{max-width:1400px;margin:0 auto;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:48px;}
+.back-btn{width:48px;height:48px;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;transition:all 0.3s;}
+.back-btn:hover{background:rgba(255,255,255,0.08);transform:scale(1.05);}
+
+.hero{background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.1));border-radius:28px;padding:48px;margin-bottom:32px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 80% 20%,rgba(139,92,246,0.2),transparent 50%);pointer-events:none;}
+.hero-content{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;}
+.hero-left{}
+.hero-stat{display:flex;align-items:baseline;gap:16px;margin-bottom:16px;}
+.hero-value{font-size:80px;font-weight:900;color:#a78bfa;}
+.hero-label{font-size:18px;color:rgba(255,255,255,0.6);}
+.hero-evolution{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(16,185,129,0.15);border-radius:100px;font-size:14px;font-weight:700;color:#10b981;}
+.hero-evolution.down{background:rgba(239,68,68,0.15);color:#ef4444;}
+.hero-evolution.stable{background:rgba(245,158,11,0.15);color:#f59e0b;}
+.hero-right{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.mini-stat{background:rgba(0,0,0,0.3);backdrop-filter:blur(10px);border-radius:20px;padding:24px;text-align:center;}
+.mini-stat-value{font-size:32px;font-weight:800;margin-bottom:8px;}
+.mini-stat-label{font-size:13px;color:rgba(255,255,255,0.6);}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-bottom:24px;}
+.card{background:rgba(255,255,255,0.03);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:32px;}
+.card-title{font-size:20px;font-weight:800;margin-bottom:24px;display:flex;align-items:center;gap:12px;}
+.card-title-icon{font-size:28px;}
+
+.matiere-list{display:flex;flex-direction:column;gap:12px;}
+.matiere-item{display:flex;align-items:center;justify-content:space-between;padding:16px;background:rgba(0,0,0,0.2);border-radius:12px;transition:all 0.2s;}
+.matiere-item:hover{background:rgba(0,0,0,0.4);transform:translateX(4px);}
+.matiere-name{font-size:15px;font-weight:600;flex:1;}
+.matiere-moyenne{font-size:20px;font-weight:800;padding:8px 16px;background:linear-gradient(135deg,#6366f1,#818cf8);border-radius:8px;min-width:60px;text-align:center;}
+.matiere-moyenne.good{background:linear-gradient(135deg,#10b981,#059669);}
+.matiere-moyenne.bad{background:linear-gradient(135deg,#ef4444,#dc2626);}
+
+.suggestions-list{display:flex;flex-direction:column;gap:16px;}
+.suggestion{padding:20px;border-left:4px solid;border-radius:12px;background:rgba(0,0,0,0.2);transition:all 0.3s;}
+.suggestion:hover{background:rgba(0,0,0,0.3);transform:translateX(4px);}
+.suggestion.high{border-left-color:#ef4444;background:rgba(239,68,68,0.1);}
+.suggestion.medium{border-left-color:#f59e0b;background:rgba(245,158,11,0.1);}
+.suggestion.low{border-left-color:#10b981;background:rgba(16,185,129,0.1);}
+.suggestion-header{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.suggestion-icon{font-size:24px;}
+.suggestion-title{font-size:16px;font-weight:700;}
+.suggestion-text{font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6;}
+.suggestion-action{margin-top:12px;padding:10px 20px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:white;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.suggestion-action:hover{background:rgba(255,255,255,0.15);transform:translateY(-2px);}
+
+.progress-section{margin-bottom:24px;}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-top:16px;}
+.week-item{background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;text-align:center;}
+.week-item.active{background:linear-gradient(135deg,#6366f1,#818cf8);box-shadow:0 4px 16px rgba(99,102,241,0.3);}
+.week-label{font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:8px;}
+.week-value{font-size:20px;font-weight:800;}
+
+.empty-state{text-align:center;padding:80px 40px;color:rgba(255,255,255,0.5);}
+.empty-icon{font-size:64px;margin-bottom:24px;opacity:0.5;}
+.empty-text{font-size:18px;margin-bottom:32px;}
+.empty-btn{padding:16px 32px;background:linear-gradient(135deg,#6366f1,#818cf8);border:none;border-radius:12px;color:white;font-size:15px;font-weight:700;cursor:pointer;}
+
+.loading{text-align:center;padding:80px 40px;}
+.spinner{width:60px;height:60px;border:4px solid rgba(255,255,255,0.1);border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 24px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<div style="display:flex;align-items:center;gap:24px;">
+<div class="back-btn" onclick="window.location.href='dashboard.html'">←</div>
+<div>
+<div style="font-size:36px;font-weight:900;">📊 Résultats & Insights</div>
+<div style="font-size:14px;color:rgba(255,255,255,0.5);">Analyse complète de tes résultats</div>
+</div>
+</div>
+<button style="padding:14px 28px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:white;font-weight:600;cursor:pointer;" onclick="refresh()">🔄 Actualiser</button>
+</div>
+
+<div id="loading" class="loading">
+<div class="spinner"></div>
+<div style="font-size:18px;font-weight:600;margin-bottom:8px;">Chargement des données...</div>
+<div style="font-size:14px;color:rgba(255,255,255,0.6);">Analyse de tes résultats EcoleDirecte</div>
+</div>
+
+<div id="content" style="display:none;">
+<!-- Hero Section -->
+<div class="hero">
+<div class="hero-content">
+<div class="hero-left">
+<div class="hero-stat">
+<div class="hero-value" id="moyenneValue">--</div>
+<div class="hero-label">/20</div>
+</div>
+<div style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:16px;">Moyenne générale</div>
+<div id="evolutionBadge"></div>
+</div>
+<div class="hero-right">
+<div class="mini-stat">
+<div class="mini-stat-value" style="color:#6366f1;" id="nbNotes">0</div>
+<div class="mini-stat-label">Notes</div>
+</div>
+<div class="mini-stat">
+<div class="mini-stat-value" style="color:#a78bfa;" id="nbMatieres">0</div>
+<div class="mini-stat-label">Matières</div>
+</div>
+<div class="mini-stat" style="grid-column:1/-1;">
+<div class="mini-stat-value" style="color:#10b981;" id="planActif">Aucun</div>
+<div class="mini-stat-label">Plan actif</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Grid -->
+<div class="grid">
+<!-- Top Matières -->
+<div class="card">
+<div class="card-title">
+<span class="card-title-icon">🏆</span>
+<span>Points forts</span>
+</div>
+<div class="matiere-list" id="topMatieres"></div>
+</div>
+
+<!-- Axes d'amélioration -->
+<div class="card">
+<div class="card-title">
+<span class="card-title-icon">🎯</span>
+<span>Axes d'amélioration</span>
+</div>
+<div class="matiere-list" id="bottomMatieres"></div>
+</div>
+</div>
+
+<!-- Suggestions -->
+<div class="card">
+<div class="card-title">
+<span class="card-title-icon">💡</span>
+<span>Suggestions personnalisées</span>
+</div>
+<div class="suggestions-list" id="suggestions"></div>
+</div>
+
+<!-- Progression hebdomadaire -->
+<div class="card progress-section">
+<div class="card-title">
+<span class="card-title-icon">📈</span>
+<span>Progression des 7 dernières semaines</span>
+</div>
+<div class="week-grid" id="weeklyProgress"></div>
+</div>
+</div>
+
+<div id="emptyState" class="empty-state" style="display:none;">
+<div class="empty-icon">📊</div>
+<div class="empty-text">Connecte ton compte EcoleDirecte pour voir tes résultats et insights</div>
+<button class="empty-btn" onclick="window.location.href='settings.html'">Connecter EcoleDirecte</button>
+</div>
+
+</div>
+
+<script>
+const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+const userId = currentUser.name?.replace(/\s+/g, '_').toLowerCase() || 'guest';
+
+async function loadData() {
+  try {
+    // Vérifier si ED connecté
+    const edData = localStorage.getItem(`sp_ed_${userId}`) || localStorage.getItem(`scorepilot_ed_${userId}`);
+    
+    if (!edData) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'block';
+      return;
+    }
+    
+    const ed = JSON.parse(edData);
+    
+    // Appeler l'API insights
+    const response = await fetch('http://localhost:3000/api/ed/insights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: ed.token,
+        userId: ed.userId
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+    
+    const report = result.data;
+    
+    // Afficher les données
+    displayReport(report);
+    
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    
+  } catch (error) {
+    console.error('Erreur:', error);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+  }
+}
+
+function displayReport(report) {
+  // Moyenne générale
+  document.getElementById('moyenneValue').textContent = report.moyenneGenerale.toFixed(1);
+  
+  // Évolution
+  const evo = report.evolution;
+  const evolutionBadge = document.getElementById('evolutionBadge');
+  const trendIcon = evo.trend === 'up' ? '📈' : evo.trend === 'down' ? '📉' : '➡️';
+  const trendText = evo.trend === 'up' ? `+${evo.value.toFixed(1)} points` : evo.trend === 'down' ? `-${evo.value.toFixed(1)} points` : 'Stable';
+  evolutionBadge.className = `hero-evolution ${evo.trend}`;
+  evolutionBadge.innerHTML = `${trendIcon} ${trendText}`;
+  
+  // Stats
+  document.getElementById('nbNotes').textContent = report.stats.totalNotes;
+  document.getElementById('nbMatieres').textContent = report.stats.nbMatieres;
+  
+  // Plan actif
+  const planData = localStorage.getItem(`sp_plan_${userId}`);
+  if (planData) {
+    const plan = JSON.parse(planData);
+    document.getElementById('planActif').textContent = plan.name;
+  }
+  
+  // Top matières
+  const topHtml = report.top3.map(m => `
+    <div class="matiere-item">
+      <div class="matiere-name">${m.nom}</div>
+      <div class="matiere-moyenne good">${m.moyenne.toFixed(1)}</div>
+    </div>
+  `).join('');
+  document.getElementById('topMatieres').innerHTML = topHtml || '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:20px;">Aucune donnée</div>';
+  
+  // Bottom matières
+  const bottomHtml = report.bottom3.map(m => `
+    <div class="matiere-item">
+      <div class="matiere-name">${m.nom}</div>
+      <div class="matiere-moyenne ${m.moyenne < 10 ? 'bad' : ''}">${m.moyenne.toFixed(1)}</div>
+    </div>
+  `).join('');
+  document.getElementById('bottomMatieres').innerHTML = bottomHtml || '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:20px;">Aucune donnée</div>';
+  
+  // Suggestions
+  const suggestionsHtml = report.suggestions.map(s => `
+    <div class="suggestion ${s.priority}">
+      <div class="suggestion-header">
+        <span class="suggestion-icon">${s.icon}</span>
+        <span class="suggestion-title">${s.title}</span>
+      </div>
+      <div class="suggestion-text">${s.text}</div>
+      ${s.action ? `<button class="suggestion-action" onclick="handleAction('${s.action}', '${s.matiere || ''}')">Créer un plan</button>` : ''}
+    </div>
+  `).join('');
+  document.getElementById('suggestions').innerHTML = suggestionsHtml || '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:20px;">Aucune suggestion pour le moment</div>';
+  
+  // Progression hebdomadaire
+  const weeks = report.weeklyProgress.slice(-7);
+  const weekHtml = weeks.map((w, i) => `
+    <div class="week-item ${i === weeks.length - 1 ? 'active' : ''}">
+      <div class="week-label">S${w.week.split('-W')[1]}</div>
+      <div class="week-value">${w.moyenne.toFixed(1)}</div>
+    </div>
+  `).join('');
+  document.getElementById('weeklyProgress').innerHTML = weekHtml;
+}
+
+function handleAction(action, matiere) {
+  if (action === 'create_plan') {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:28px;right:28px;background:#1a1a2e;border:1px solid rgba(99,102,241,0.35);border-radius:14px;padding:14px 22px;font-size:14px;font-weight:600;z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,0.5);color:white;animation:_ti 0.3s ease;';
+    t.innerHTML = `<style>@keyframes _ti{from{opacity:0;transform:translateY(10px)}to{opacity:1}}</style>🎯 Plan pour <strong>${matiere}</strong> — bientôt disponible !`;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, 2800);
+  }
+}
+
+function refresh() {
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  loadData();
+}
+
+window.addEventListener('load', loadData);
+</script>
+</body>
+</html>

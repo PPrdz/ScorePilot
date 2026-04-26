@@ -1,0 +1,437 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCRIPT ADDON POUR NOUVEAU-RANG.HTML
+// ═══════════════════════════════════════════════════════════════════════════════
+// À COLLER À LA FIN DU FICHIER nouveau-rang.html, JUSTE AVANT </script>
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ========================================
+// 1. RÉCUPÉRER LE PIN DEPUIS L'INSCRIPTION
+// ========================================
+
+function getUserPin(uid) {
+  const userKey = `scorepilot_user_${uid}`;
+  const userData = localStorage.getItem(userKey);
+  
+  if (userData) {
+    const user = JSON.parse(userData);
+    return user.pin || user.code || '—';
+  }
+  
+  return '—';
+}
+
+// ========================================
+// 2. LEADERBOARD GLOBAL (TOUS LES USERS)
+// ========================================
+
+// REMPLACER la fonction loadRealUsers() par celle-ci :
+function loadRealUsers() {
+  const users = [];
+  
+  // Scanner TOUS les utilisateurs du système
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    
+    if (key.startsWith('scorepilot_user_')) {
+      const uid = key.replace('scorepilot_user_', '');
+      const userData = JSON.parse(localStorage.getItem(key));
+      
+      // Vérifier que le user existe vraiment (a un nom ou email)
+      if (!userData.name && !userData.email) {
+        console.log('⚠️ User fantôme ignoré:', uid);
+        continue; // Ignorer les users fantômes/supprimés
+      }
+      
+      // Récupérer les rôles actifs
+      const rolesData = localStorage.getItem(`scorepilot_roles_${uid}`) || 
+                       localStorage.getItem(`sp_roles_${uid}`);
+      let roles = rolesData ? JSON.parse(rolesData) : [];
+      roles = roles.filter(r => r.expiresAt === -1 || r.expiresAt > Date.now());
+      
+      // Déterminer le statut
+      let status = userData.role?.toUpperCase() || userData.plan?.toUpperCase() || 'FREE';
+      
+      // Vérifier si c'est un admin (plusieurs façons)
+      if (userData.isAdmin === true || 
+          status === 'ADMIN' || 
+          roles.some(r => r.role === 'ADMIN')) {
+        status = 'ADMIN';
+      } else if (roles.length > 0) {
+        const priority = { ADMIN: 3, COLLABORATEUR: 2, PRO: 1 };
+        roles.sort((a, b) => (priority[b.role] || 0) - (priority[a.role] || 0));
+        status = roles[0].role;
+      }
+      
+      console.log(`User ${userData.name} (${uid}): status=${status}`);
+      
+      // FILTRER : Afficher SEULEMENT PRO/COLLABORATEUR/ADMIN dans le leaderboard
+      if (status !== 'PRO' && status !== 'COLLABORATEUR' && status !== 'ADMIN') {
+        console.log(`  ❌ Ignoré (FREE)`);
+        continue; // Ignorer les FREE
+      }
+      
+      console.log(`  ✅ Ajouté au leaderboard`);
+      
+      // Récupérer les points de rang
+      const rankData = JSON.parse(localStorage.getItem(`sp_rank_${uid}`) || '{}');
+      const pts = rankData.points || 0;
+      
+      users.push({
+        name: userData.name || uid,
+        userId: uid,
+        points: pts,
+        rank: getCurrentRank(pts),
+        status: status,
+        pin: userData.pin || userData.code || '—',
+        isMe: uid === userId,
+        wins: rankData.wins || 0,
+        losses: rankData.losses || 0
+      });
+    }
+  }
+  
+  console.log(`📊 Total dans leaderboard: ${users.length}`);
+  
+  // Trier par points décroissants
+  return users.sort((a, b) => b.points - a.points);
+}
+
+// ========================================
+// 3. AFFICHER LE PIN DANS LE LEADERBOARD
+// ========================================
+
+// REMPLACER la fonction generateLeaderboard() par celle-ci :
+function generateLeaderboard() {
+  const users = loadRealUsers();
+  const list = document.getElementById('leaderboardList');
+  const currentUserData = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+  const isUserAdmin = currentUserData.role === 'admin' || currentUserData.isAdmin === true;
+  
+  if (users.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:32px;color:rgba(255,255,255,0.3);font-size:11px;letter-spacing:3px;text-transform:uppercase;font-family:var(--mono);">Aucun joueur classé</div>';
+    return;
+  }
+  
+  list.innerHTML = users.map((u, i) => {
+    const pos = i + 1;
+    const isTop = pos <= 3;
+    const photo = localStorage.getItem(`scorepilot_photo_${u.userId}`);
+    const avatarEl = photo
+      ? `<img src="${photo}" class="student-avatar" style="object-fit:cover;"/>`
+      : `<div class="student-avatar">${u.name.charAt(0).toUpperCase()}</div>`;
+    const posBadge = isTop
+      ? `<div class="pos-badge pos-top">${pos === 1 ? '01' : pos === 2 ? '02' : '03'}</div>`
+      : `<div class="pos-badge pos-normal">${String(pos).padStart(2,'0')}</div>`;
+    
+    // Afficher le PIN seulement pour les admins
+    const pinTag = isUserAdmin ? `
+      <div class="student-rank-tag" style="background:rgba(255,70,85,0.08);border-color:rgba(255,70,85,0.2);">
+        <span style="letter-spacing:1.5px;">PIN: ${u.pin}</span>
+      </div>
+    ` : '';
+    
+    return `
+    <div class="leaderboard-item ${u.isMe?'me':''}" onclick='showProfile(${JSON.stringify(u).replace(/'/g,"&apos;")},${pos})'>
+      ${posBadge}
+      ${avatarEl}
+      <div style="flex:1;min-width:0;">
+        <div class="student-name">${u.name}${u.isMe?' <span style="color:rgba(255,70,85,0.7);font-size:10px;letter-spacing:2px;">(TOI)</span>':''}</div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <div class="student-rank-tag">
+            <span class="lb-emblem">${buildSmallSVG(u.rank, 22)}</span>
+            <span style="letter-spacing:1.5px;">${u.rank.name}</span>
+          </div>
+          ${pinTag}
+          <div class="student-rank-tag" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2);color:#10b981;">
+            <span style="letter-spacing:1.5px;">${u.wins}V-${u.losses}D</span>
+          </div>
+        </div>
+      </div>
+      <div class="student-pts">
+        <div class="student-pts-val" style="color:${u.rank.color};">${u.points}</div>
+        <div class="student-pts-lbl">RR</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ========================================
+// 4. ADMIN PANEL
+// ========================================
+
+// Vérifier si admin
+function isAdmin() {
+  const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+  return user.role === 'admin' || user.isAdmin === true;
+}
+
+// Ajouter le bouton admin dans le header
+if (isAdmin()) {
+  const header = document.querySelector('.header');
+  const adminBtn = document.createElement('button');
+  adminBtn.innerHTML = '⚙️ ADMIN';
+  adminBtn.style.cssText = `
+    margin-left:auto;padding:10px 20px;
+    background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);
+    border-radius:10px;color:#ef4444;font-size:10px;font-weight:700;
+    letter-spacing:3px;text-transform:uppercase;cursor:pointer;
+    transition:all 0.2s;font-family:var(--sf);
+  `;
+  adminBtn.onmouseover = () => {
+    adminBtn.style.background = 'rgba(239,68,68,0.25)';
+    adminBtn.style.borderColor = 'rgba(239,68,68,0.5)';
+  };
+  adminBtn.onmouseout = () => {
+    adminBtn.style.background = 'rgba(239,68,68,0.15)';
+    adminBtn.style.borderColor = 'rgba(239,68,68,0.3)';
+  };
+  adminBtn.onclick = openAdminPanel;
+  header.appendChild(adminBtn);
+}
+
+// Modal admin
+function openAdminPanel() {
+  const users = loadRealUsers();
+  
+  const modal = document.createElement('div');
+  modal.id = 'adminModal';
+  modal.style.cssText = `
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);
+    z-index:2000;display:flex;align-items:center;justify-content:center;
+    padding:32px;overflow-y:auto;
+  `;
+  
+  modal.innerHTML = `
+    <div style="background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:20px;max-width:1200px;width:100%;max-height:90vh;overflow-y:auto;padding:32px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div>
+          <div style="font-size:24px;font-weight:900;letter-spacing:3px;text-transform:uppercase;">ADMIN PANEL</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:3px;text-transform:uppercase;margin-top:4px;">GESTION DES UTILISATEURS</div>
+        </div>
+        <button onclick="document.getElementById('adminModal').remove()" style="width:40px;height:40px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:rgba(255,255,255,0.6);font-size:20px;cursor:pointer;">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;" id="adminUsersList"></div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Remplir la liste des users
+  const container = document.getElementById('adminUsersList');
+  container.innerHTML = users.map(u => `
+    <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <div class="student-avatar" style="width:48px;height:48px;font-size:18px;">${u.name.charAt(0).toUpperCase()}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;letter-spacing:0.5px;">${u.name}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);font-family:var(--mono);margin-top:2px;">PIN: ${u.pin}</div>
+        </div>
+      </div>
+      
+      <div style="margin-bottom:12px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:6px;">POINTS (RR)</div>
+        <input type="number" id="points_${u.userId}" value="${u.points}" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;font-size:14px;font-family:var(--mono);">
+      </div>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:6px;">VICTOIRES</div>
+          <input type="number" id="wins_${u.userId}" value="${u.wins}" style="width:100%;padding:10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;color:#10b981;font-size:14px;font-family:var(--mono);">
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:6px;">DÉFAITES</div>
+          <input type="number" id="losses_${u.userId}" value="${u.losses}" style="width:100%;padding:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;color:#ef4444;font-size:14px;font-family:var(--mono);">
+        </div>
+      </div>
+      
+      <button onclick="saveUserData('${u.userId}')" style="width:100%;padding:12px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:10px;color:#10b981;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;">
+        💾 SAUVEGARDER
+      </button>
+    </div>
+  `).join('');
+}
+
+function saveUserData(uid) {
+  const points = parseInt(document.getElementById(`points_${uid}`).value) || 0;
+  const wins = parseInt(document.getElementById(`wins_${uid}`).value) || 0;
+  const losses = parseInt(document.getElementById(`losses_${uid}`).value) || 0;
+  
+  // Mettre à jour les données de rang
+  let rankData = JSON.parse(localStorage.getItem(`sp_rank_${uid}`) || '{}');
+  rankData.points = points;
+  rankData.wins = wins;
+  rankData.losses = losses;
+  rankData.totalMatches = wins + losses;
+  
+  const newRank = getCurrentRank(points);
+  rankData.rank = newRank.name;
+  rankData.icon = '—'; // Pas d'icône dans ce système
+  
+  localStorage.setItem(`sp_rank_${uid}`, JSON.stringify(rankData));
+  
+  alert(`✅ Modifications sauvegardées pour ${uid}`);
+  
+  // Rafraîchir
+  generateLeaderboard();
+  if (uid === userId) {
+    updateRankDisplay();
+  }
+}
+
+// ========================================
+// 5. MATCH RESULT MODAL
+// ========================================
+
+window.showMatchResult = function(matchData) {
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);
+    z-index:2000;display:flex;align-items:center;justify-content:center;
+    padding:32px;
+  `;
+  
+  const isWin = matchData.result === 'win';
+  const rank = getCurrentRank(matchData.totalPoints);
+  
+  modal.innerHTML = `
+    <div style="background:rgba(10,10,15,0.98);border:1px solid rgba(255,255,255,0.08);border-radius:20px;max-width:600px;width:100%;padding:40px;position:relative;">
+      <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:20px;right:20px;width:40px;height:40px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:rgba(255,255,255,0.6);font-size:20px;cursor:pointer;">×</button>
+      
+      <div style="text-align:center;padding:40px 20px;background:linear-gradient(135deg,${isWin ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'},transparent);border-radius:16px;margin-bottom:32px;">
+        <div style="font-size:64px;margin-bottom:16px;">${isWin ? '🎉' : '😔'}</div>
+        <div style="font-size:40px;font-weight:900;margin-bottom:16px;color:${isWin ? '#10b981' : '#ef4444'};letter-spacing:4px;text-transform:uppercase;font-family:'Montserrat',sans-serif;">
+          ${isWin ? 'VICTOIRE' : 'DÉFAITE'}
+        </div>
+        <div style="font-size:56px;font-weight:900;color:${rank.color};font-family:var(--mono);">
+          ${matchData.pointsChange > 0 ? '+' : ''}${matchData.pointsChange} RR
+        </div>
+      </div>
+      
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:32px;">
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);padding:20px;border-radius:12px;text-align:center;">
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">SCORE</div>
+          <div style="font-size:32px;font-weight:900;font-family:var(--mono);">${matchData.score}%</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);padding:20px;border-radius:12px;text-align:center;">
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">PRÉCISION</div>
+          <div style="font-size:32px;font-weight:900;font-family:var(--mono);">${matchData.correctAnswers}/${matchData.questionsTotal}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);padding:20px;border-radius:12px;text-align:center;">
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">NOUVEAU RANG</div>
+          <div style="font-size:24px;font-weight:900;color:${rank.color};font-family:'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:2px;">${rank.name}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);padding:20px;border-radius:12px;text-align:center;">
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">BILAN</div>
+          <div style="font-size:24px;font-weight:900;font-family:var(--mono);">
+            <span style="color:#10b981;">${matchData.wins}</span><span style="color:rgba(255,255,255,0.3);">V</span> - <span style="color:#ef4444;">${matchData.losses}</span><span style="color:rgba(255,255,255,0.3);">D</span>
+          </div>
+        </div>
+      </div>
+      
+      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);padding:24px;border-radius:12px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:16px;">DÉTAILS DE LA RÉVISION</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;font-size:13px;">
+            <span style="color:rgba(255,255,255,0.5);">Matière</span>
+            <strong style="letter-spacing:1px;">${matchData.subject || 'Non spécifié'}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;font-size:13px;">
+            <span style="color:rgba(255,255,255,0.5);">Date</span>
+            <strong style="font-family:var(--mono);">${new Date(matchData.date).toLocaleDateString('fr-FR')}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;font-size:13px;">
+            <span style="color:rgba(255,255,255,0.5);">Durée</span>
+            <strong>${matchData.duration || 'N/A'}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+};
+
+// Détecter si on revient d'un quiz
+window.addEventListener('load', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const lastMatch = sessionStorage.getItem('lastMatch');
+  
+  if (urlParams.get('showResult') === 'true' && lastMatch) {
+    setTimeout(() => {
+      showMatchResult(JSON.parse(lastMatch));
+      sessionStorage.removeItem('lastMatch');
+      window.history.replaceState({}, '', 'rang.html');
+    }, 500);
+  }
+});
+
+// ========================================
+// 6. FONCTION HELPER POUR QUIZ
+// ========================================
+
+window.addMatchToRanking = function(quizData) {
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+  const userId = (currentUser.name || 'guest').replace(/\s+/g, '_').toLowerCase();
+  
+  const key = `sp_rank_${userId}`;
+  let rankData = JSON.parse(localStorage.getItem(key) || '{}');
+  
+  if (!rankData.points) rankData.points = 0;
+  if (!rankData.matches) rankData.matches = [];
+  if (!rankData.wins) rankData.wins = 0;
+  if (!rankData.losses) rankData.losses = 0;
+  if (!rankData.totalMatches) rankData.totalMatches = 0;
+  
+  const score = Math.round((quizData.correctAnswers / quizData.totalQuestions) * 100);
+  const isWin = score >= 70;
+  
+  let pointsChange = 0;
+  if (isWin) {
+    pointsChange = Math.floor(15 + ((score - 70) / 30) * 15);
+    rankData.wins++;
+  } else {
+    pointsChange = -Math.floor(5 + ((70 - score) / 70) * 15);
+    rankData.losses++;
+  }
+  
+  rankData.points = Math.max(0, rankData.points + pointsChange);
+  rankData.totalMatches++;
+  
+  const currentRank = getCurrentRank(rankData.points);
+  rankData.rank = currentRank.name;
+  
+  const match = {
+    id: Date.now(),
+    date: Date.now(),
+    title: quizData.subject || 'Révision générale',
+    subject: quizData.subject || 'Non spécifié',
+    questionsTotal: quizData.totalQuestions,
+    correctAnswers: quizData.correctAnswers,
+    score: score,
+    result: isWin ? 'win' : 'loss',
+    pointsChange: pointsChange,
+    totalPoints: rankData.points,
+    rankName: currentRank.name,
+    wins: rankData.wins,
+    losses: rankData.losses,
+    totalMatches: rankData.totalMatches,
+    duration: quizData.duration || 'N/A'
+  };
+  
+  rankData.matches.push(match);
+  
+  if (rankData.matches.length > 50) {
+    rankData.matches = rankData.matches.slice(-50);
+  }
+  
+  localStorage.setItem(key, JSON.stringify(rankData));
+  
+  console.log('✅ Match ajouté:', match);
+  
+  return match;
+};
+
+console.log('✅ Addon fonctionnel chargé');
+console.log('📌 Features: PIN from registration, Global leaderboard, Admin panel, Match result');

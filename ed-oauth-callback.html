@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Connexion Google - ScorePilot</title>
+<style>
+body{margin:0;padding:0;font-family:system-ui;background:#0a0a0a;color:white;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;}
+.spinner{width:50px;height:50px;border:4px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="spinner"></div>
+<div>Finalisation de la connexion...</div>
+
+<script>
+// Cette page reçoit le token OAuth de Google et le renvoie à la page parent
+
+// Récupérer le token depuis l'URL (format: #access_token=xxx&...)
+const hash = window.location.hash.substring(1);
+const params = new URLSearchParams(hash);
+const accessToken = params.get('access_token');
+const error = params.get('error');
+
+if (error) {
+  // Erreur OAuth
+  window.opener.postMessage({
+    type: 'GOOGLE_OAUTH_ERROR',
+    error: error
+  }, '*');
+  window.close();
+} else if (accessToken) {
+  // Succès - Récupérer le profil Google
+  fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  })
+  .then(res => res.json())
+  .then(profile => {
+    // Envoyer les données au parent
+    window.opener.postMessage({
+      type: 'GOOGLE_OAUTH_SUCCESS',
+      profile: profile,
+      accessToken: accessToken
+    }, '*');
+    
+    // Fermer la popup
+    setTimeout(() => window.close(), 500);
+  })
+  .catch(err => {
+    window.opener.postMessage({
+      type: 'GOOGLE_OAUTH_ERROR',
+      error: 'Failed to get user profile'
+    }, '*');
+    window.close();
+  });
+} else {
+  // Pas de token
+  window.opener.postMessage({
+    type: 'GOOGLE_OAUTH_ERROR',
+    error: 'No access token received'
+  }, '*');
+  window.close();
+}
+</script>
+</body>
+</html>
